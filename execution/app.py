@@ -322,7 +322,11 @@ def executar_disparo_alerta(tipo, force_send=False):
     if not remetente or not senha or not host or not destinatarios_str:
         return False, "Configurações de E-mail incompletas."
 
+    destinatarios_str = destinatarios_str.replace(',', ';')
     destinatarios = [e.strip() for e in destinatarios_str.split(';') if e.strip()]
+    
+    if len(destinatarios) == 0:
+        return False, "E-mails destinatários formatados incorretamente ou em branco."
     
     try:
         if tipo == 'prevendas':
@@ -522,8 +526,10 @@ def executar_disparo_alerta(tipo, force_send=False):
         return True, f"Alerta enviado para {len(destinatarios)} destinatário(s)!"
         
     except smtplib.SMTPAuthenticationError:
+        print("Erro Crítico de Envio SMTP: Autenticação falhou. Usuário ou senha incorretos/bloqueados.")
         return False, "Erro de Autenticação no SMTP (Verifique a Senha de Aplicativo ou liberação do provedor)."
     except Exception as e:
+        print(f"Erro Crítico de Envio SMTP GERAL: {str(e)}")
         return False, f"Erro ao processar disparo de e-mail: {str(e)}"
 
 class AlertManager:
@@ -611,6 +617,27 @@ def toggle_rotina():
     ativo = data.get('ativo', False)
     
     if tipo in alert_manager.state:
+        if ativo:
+            # Validação pró-ativa das configurações antes de dar start na thread de alertas
+            if not os.path.exists(EMAIL_CONFIG_FILE) or not os.path.exists(ALERTAS_CONFIG_FILE):
+                return jsonify({"status": "error", "message": "Por favor, cadastre primeiro as Informações do Cliente e as Configurações de E-Mail do Aplicativo."}), 400
+                
+            with open(ALERTAS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    alerta_cfg = json.load(f)
+                except json.JSONDecodeError:
+                    alerta_cfg = {}
+            if not alerta_cfg.get('emails') or not alerta_cfg.get('emails').strip():
+                return jsonify({"status": "error", "message": "Nenhum e-mail de destinatário foi cadastrado na tela de Inf. Clientes. Não é possível iniciar alertas sem um destino."}), 400
+            
+            with open(EMAIL_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    email_cfg = json.load(f)
+                except json.JSONDecodeError:
+                    email_cfg = {}
+            if not email_cfg.get('email') or not email_cfg.get('password') or not email_cfg.get('host'):
+                return jsonify({"status": "error", "message": "O remetente do GFC (E-mail, Senha ou Host) não foi configurado corretamente na aba de 'Conf. Email Aplicativo'."}), 400
+
         alert_manager.set_estado(tipo, ativo)
         estado_str = "iniciada" if ativo else "finalizada"
         return jsonify({"status": "success", "message": f"Rotina de {tipo} {estado_str} com sucesso!", "ativo": ativo})

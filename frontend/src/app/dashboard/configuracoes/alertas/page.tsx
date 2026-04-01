@@ -2,6 +2,37 @@
 
 import { useState, useEffect } from 'react';
 
+function isValidCNPJ(cnpj: string): boolean {
+  const digitsOnly = cnpj.replace(/[^\d]+/g, '');
+  if (digitsOnly.length !== 14) return false;
+  if (/^(\d)\1+$/.test(digitsOnly)) return false;
+  
+  let tamanho = digitsOnly.length - 2;
+  let numeros = digitsOnly.substring(0, tamanho);
+  const digitos = digitsOnly.substring(tamanho);
+  let soma = 0;
+  let pos = tamanho - 7;
+  for (let i = tamanho; i >= 1; i--) {
+    soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  if (resultado !== parseInt(digitos.charAt(0))) return false;
+  
+  tamanho = tamanho + 1;
+  numeros = digitsOnly.substring(0, tamanho);
+  soma = 0;
+  pos = tamanho - 7;
+  for (let i = tamanho; i >= 1; i--) {
+    soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  if (resultado !== parseInt(digitos.charAt(1))) return false;
+  
+  return true;
+}
+
 export default function ConfigAlertas() {
   const [formData, setFormData] = useState({
     cnpj: '',
@@ -30,13 +61,30 @@ export default function ConfigAlertas() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    
+    if (name === 'cnpj') {
+      let val = value.replace(/\D/g, "");
+      if (val.length > 14) val = val.substring(0, 14);
+      val = val.replace(/^(\d{2})(\d)/, "$1.$2");
+      val = val.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+      val = val.replace(/\.(\d{3})(\d)/, ".$1/$2");
+      val = val.replace(/(\d{4})(\d)/, "$1-$2");
+      setFormData({ ...formData, [name]: val });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSaveConfiguration = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setToast(null);
+
+    if (!isValidCNPJ(formData.cnpj)) {
+      setToast({ message: 'CNPJ inválido. Verifique os dados digitados e tente novamente.', type: 'error' });
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/alertas`, {
