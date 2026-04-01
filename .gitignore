@@ -1,0 +1,33 @@
+backup-hibrido/
+
+# Node modules e dist
+node_modules/
+.next/
+dist/
+out/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+execution/venv/
+venv/
+env/
+ENV/
+
+# Local Configs, Logs and DB Info (CRITICAL)
+execution/config.json
+execution/visibility.json
+execution/email_config.json
+execution/alertas_config.json
+execution/secret.key
+execution/alert_state.json
+execution/.env
+frontend/.env.local
+.env
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

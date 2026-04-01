@@ -1,0 +1,8 @@
+{
+    "nome_base": "Matriz Rede Ipe",
+    "host": "servidorpororoca18.ddns.net",
+    "port": "5432",
+    "database": "matriz_rede_ipe",
+    "user": "postgres",
+    "password": "gAAAAABpy__bcFSNcgjOFpBOoayo-qbs8kuC80iZF7tJNiAvC3LnsRfBznFPiTLUgHF2LT6IavecxABUygI30lIwTSzU7_ifBD02vhmemVtEwK72MXP0lLI="
+}
