@@ -517,9 +517,14 @@ def executar_disparo_alerta(tipo, force_send=False):
         
         msg.attach(MIMEText(corpo, 'html'))
         
-        server = smtplib.SMTP(host, int(porta))
-        server.starttls()
-        server.login(remetente, senha)
+        if int(porta) == 465:
+            server = smtplib.SMTP_SSL(host, int(porta))
+            server.login(remetente, senha)
+        else:
+            server = smtplib.SMTP(host, int(porta))
+            server.starttls()
+            server.login(remetente, senha)
+            
         server.send_message(msg)
         server.quit()
         
@@ -556,7 +561,7 @@ class AlertManager:
         with open(ALERT_STATE_FILE, 'w', encoding='utf-8') as f:
             json.dump(self.state, f)
 
-    def set_estado(self, tipo, status):
+    def set_estado(self, tipo, status, skip_first=False):
         if tipo not in ["prevendas", "sincronia"]:
             return
 
@@ -570,13 +575,19 @@ class AlertManager:
         if status and not self.state[tipo]:
             self.state[tipo] = True
             self.save_state()
-            self._spawn_thread(tipo)
+            self._spawn_thread(tipo, skip_first)
 
-    def _spawn_thread(self, tipo):
-        self.threads[tipo] = threading.Thread(target=self._loop, args=(tipo,), daemon=True)
+    def _spawn_thread(self, tipo, skip_first=False):
+        self.threads[tipo] = threading.Thread(target=self._loop, args=(tipo, skip_first), daemon=True)
         self.threads[tipo].start()
 
-    def _loop(self, tipo):
+    def _loop(self, tipo, skip_first=False):
+        if skip_first:
+            for _ in range(900):
+                if not self.state.get(tipo):
+                    break
+                time.sleep(1)
+
         while self.state.get(tipo):
             try:
                 # Com is_background, processa e-mail apenas se pendentes > 0.
@@ -638,9 +649,18 @@ def toggle_rotina():
             if not email_cfg.get('email') or not email_cfg.get('password') or not email_cfg.get('host'):
                 return jsonify({"status": "error", "message": "O remetente do GFC (E-mail, Senha ou Host) não foi configurado corretamente na aba de 'Conf. Email Aplicativo'."}), 400
 
-        alert_manager.set_estado(tipo, ativo)
-        estado_str = "iniciada" if ativo else "finalizada"
-        return jsonify({"status": "success", "message": f"Rotina de {tipo} {estado_str} com sucesso!", "ativo": ativo})
+            # Realiza um teste imadiato disparando o email
+            sucesso, msg = executar_disparo_alerta(tipo, force_send=True)
+            if not sucesso:
+                return jsonify({"status": "error", "message": f"Falha no envio do alerta de teste: {msg}"}), 400
+
+            alert_manager.set_estado(tipo, ativo, skip_first=True)
+            estado_str = "iniciada"
+            return jsonify({"status": "success", "message": f"Rotina iniciada com sucesso! Alerta de teste enviado: {msg}", "ativo": ativo})
+        else:
+            alert_manager.set_estado(tipo, ativo)
+            estado_str = "finalizada"
+            return jsonify({"status": "success", "message": f"Rotina de {tipo} {estado_str} com sucesso!", "ativo": ativo})
     
     return jsonify({"status": "error", "message": "Tipo de rotina indisponível."}), 400
 
