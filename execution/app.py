@@ -52,24 +52,12 @@ def test_connection():
 @app.route('/api/config/save', methods=['POST'])
 def save_configuration():
     """
-    Salva a configuração local (incluindo CNPJ, Nome, e credenciais do DB).
-    A senha do usuário DB sai criptografada pela biblioteca cryptography.
+    Desabilitado. Configurações devem ser alteradas no painel do servidor Render.
     """
-    data = request.json
-    
-    # Validações primárias
-    required_fields = ['nome_base', 'host', 'database', 'user', 'password']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return jsonify({"status": "error", "message": f"O campo '{field}' é obrigatório."}), 400
-            
-    # Salvar configurações no arquivo JSON criptografado local
-    success = save_config(data)
-    
-    if success:
-        return jsonify({"status": "success", "message": "Configurações salvas e criptografadas localmente com sucesso!"}), 200
-    else:
-        return jsonify({"status": "error", "message": "Erro ao salvar as configurações localmente."}), 500
+    return jsonify({
+        "status": "error", 
+        "message": "Configuração manual desabilitada. Utilize as Variáveis de Ambiente no painel (Render) para conectar um banco de dados."
+    }), 403
 
 
 @app.route('/api/config/load', methods=['GET'])

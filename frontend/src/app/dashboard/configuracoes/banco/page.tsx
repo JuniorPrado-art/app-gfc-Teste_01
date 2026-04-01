@@ -11,10 +11,8 @@ export default function ConfigBancoAdminPage() {
     user: '',
     password: ''
   });
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/load`)
@@ -27,222 +25,93 @@ export default function ConfigBancoAdminPage() {
             port: data.data.port || '',
             database: data.data.database || '',
             user: data.data.user || '',
-            password: data.data.password || '' // Usually comes back as ******** from backend
+            password: data.data.password || ''
           });
         }
       })
-      .catch();
+      .catch()
+      .finally(() => setLoading(false));
   }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleTestConnection = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setToast(null);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/test`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
-        setToast({ message: data.message, type: 'success' });
-      } else {
-        setToast({ message: data.message || 'Erro ao conectar.', type: 'error' });
-      }
-    } catch (err) {
-      setToast({ message: 'Falha na requisição.', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSaveConfiguration = async () => {
-    setLoading(true);
-    setToast(null);
-
-    try {
-      const payload = { ...formData };
-      
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await res.json();
-      if (res.ok) {
-        setToast({ message: data.message, type: 'success' });
-        setIsEditing(false); // Fecha o modo edição
-      } else {
-        setToast({ message: data.message || 'Erro ao salvar.', type: 'error' });
-      }
-    } catch (err) {
-      setToast({ message: 'Falha na requisição de salvamento.', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="fade-in">
       <header style={{ marginBottom: 32 }}>
         <h1 className="title-primary">Banco de Dados</h1>
-        <p className="text-muted">Reconfigure os dados de conexão do sistema principal.</p>
+        <p className="text-muted">Visualização dos dados de conexão em nuvem do sistema principal.</p>
       </header>
-      
-      {toast && (
-        <div className={`toast fade-in`} style={{
-            background: toast.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-            borderColor: toast.type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-            color: toast.type === 'error' ? '#fca5a5' : '#6ee7b7',
-            marginBottom: '24px'
-        }}>
-          {toast.message}
-        </div>
-      )}
 
-      <div className="dashboard-card" style={{ maxWidth: '600px' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-          {!isEditing ? (
-            <button 
-              onClick={() => {
-                setIsEditing(true);
-                // Limpa a senha ofuscada para forçar o recadastro 
-                if (formData.password === '********') {
-                  setFormData(prev => ({ ...prev, password: '' }));
-                }
-              }}
-              className="gfc-button secondary" 
-              style={{ fontSize: '13px' }}
-            >
-              Habilitar Edição
-            </button>
-          ) : (
-             <button 
-              onClick={() => setIsEditing(false)}
-              className="gfc-button" 
-              style={{ fontSize: '13px', background: 'transparent', color: '#94a3b8' }}
-            >
-              Cancelar Edição
-            </button>
-          )}
+      <div className="dashboard-card" style={{ maxWidth: '700px', borderLeft: '4px solid #3b82f6', backgroundColor: '#eff6ff', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <div style={{ color: '#3b82f6', fontSize: '20px' }}>ℹ️</div>
+          <div>
+            <h3 style={{ color: '#1e3a8a', fontSize: '15px', fontWeight: '600', margin: '0 0 6px 0' }}>Gerenciamento Seguro (Cloud)</h3>
+            <p style={{ color: '#1e40af', fontSize: '14px', lineHeight: '1.5', margin: 0 }}>
+              As credenciais deste aplicativo/banco de dados estão protegidas e são configuradas diretamente via <strong>Variáveis de Ambiente</strong> no painel de administração da sua Nuvem (Render). A edição manual foi desativada por motivos de segurança e para sustentar o formato de múltiplos clientes.
+            </p>
+          </div>
         </div>
+      </div>
 
-        <form onSubmit={handleTestConnection}>
-          
-          <div className="input-group">
-            <label className="input-label">Nome da Base *</label>
+      <div className="dashboard-card" style={{ maxWidth: '700px' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#334155', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: formData.host ? '#10b981' : '#cbd5e1' }}></span>
+          {loading ? 'Carregando conexão...' : (formData.host ? 'Conexão Cloud Ativa' : 'Nenhuma Conexão Configurada')}
+        </h2>
+
+        <div className="grid-2" style={{ marginBottom: '16px' }}>
+          <div className="input-group" style={{ gridColumn: 'span 2' }}>
+            <label className="input-label">Nome do Cliente/Base</label>
             <input 
-              name="nome_base" 
               value={formData.nome_base} 
-              onChange={handleInputChange} 
               className="gfc-input" 
-              placeholder="Ex: matriz/filial" 
-              required 
-              disabled={!isEditing}
+              disabled={true}
+              style={{ backgroundColor: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
             />
           </div>
+        </div>
 
-          <div className="grid-2">
-            <div className="input-group">
-              <label className="input-label">Host DB *</label>
-              <input 
-                name="host" 
-                value={formData.host} 
-                onChange={handleInputChange} 
-                className="gfc-input" 
-                placeholder="localhost ou IP" 
-                required 
-                disabled={!isEditing}
-              />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Porta DB</label>
-              <input 
-                name="port" 
-                value={formData.port} 
-                onChange={handleInputChange} 
-                className="gfc-input" 
-                placeholder="5432" 
-                type="number"
-                disabled={!isEditing}
-              />
-            </div>
-          </div>
-
+        <div className="grid-2" style={{ marginBottom: '16px' }}>
           <div className="input-group">
-            <label className="input-label">Nome do Database (Postgres) *</label>
+            <label className="input-label">Host DB (Render / Supabase)</label>
             <input 
-              name="database" 
-              value={formData.database} 
-              onChange={handleInputChange} 
+              value={formData.host} 
               className="gfc-input" 
-              placeholder="ex: banco_gfc" 
-              required 
-              disabled={!isEditing}
+              disabled={true}
+              style={{ backgroundColor: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
             />
           </div>
-
-          <div className="grid-2">
-            <div className="input-group">
-              <label className="input-label">Usuário DB *</label>
-              <input 
-                name="user" 
-                value={formData.user} 
-                onChange={handleInputChange} 
-                className="gfc-input" 
-                placeholder="postgres" 
-                required 
-                disabled={!isEditing}
-              />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Senha DB *</label>
-              <input 
-                name="password" 
-                value={formData.password} 
-                onChange={handleInputChange} 
-                className="gfc-input" 
-                type={isEditing ? "text" : "password"} 
-                placeholder={isEditing ? "Digite a senha" : "********"} 
-                required 
-                disabled={!isEditing}
-              />
-            </div>
+          <div className="input-group">
+            <label className="input-label">Porta DB</label>
+            <input 
+              value={formData.port} 
+              className="gfc-input" 
+              disabled={true}
+              style={{ backgroundColor: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
+            />
           </div>
+        </div>
 
-          {isEditing && (
-             <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
-              <button 
-                type="submit" 
-                className="gfc-button secondary" 
-                style={{ flex: 1 }}
-                disabled={loading}
-              >
-                {loading ? 'Testando...' : 'Testar Conexão'}
-              </button>
-              <button 
-                type="button" 
-                onClick={handleSaveConfiguration}
-                className="gfc-button primary" 
-                style={{ flex: 1 }}
-                disabled={loading}
-              >
-                Salvar Definitivamente
-              </button>
-            </div>
-          )}
-        </form>
+        <div className="grid-2">
+          <div className="input-group">
+            <label className="input-label">Nome do Database (Postgres)</label>
+            <input 
+              value={formData.database} 
+              className="gfc-input" 
+              disabled={true}
+              style={{ backgroundColor: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
+            />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Usuário DB</label>
+            <input 
+              value={formData.user} 
+              className="gfc-input" 
+              disabled={true}
+              style={{ backgroundColor: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-

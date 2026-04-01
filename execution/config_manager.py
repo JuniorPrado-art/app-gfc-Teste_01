@@ -1,34 +1,25 @@
-import json
 import os
-from security import encrypt_data, decrypt_data
-
-CONFIG_FILE = "config.json"
 
 def save_config(config_data):
     """
-    Salva as configurações (CNPJ, Nome, Host, User, Pass), criptografando a senha.
+    Desabilitado para Cloud.
+    Configurações devem ser alteradas no painel do servidor Render.
     """
-    # Clona do dict original para não afetar o runtime
-    safe_config = config_data.copy()
-    
-    if "password" in safe_config and safe_config["password"]:
-        safe_config["password"] = encrypt_data(safe_config["password"])
-        
-    with open(CONFIG_FILE, "w", encoding="utf-8") as file:
-        json.dump(safe_config, file, indent=4)
-    return True
+    return False
 
 def load_config():
     """
-    Carrega e descriptografa a senha para ser usada pela API Interna.
+    Lê as configurações de banco de dados diretamente das Variáveis de Ambiente do Render.
+    Se a variável DB_HOST não existir, consideramos que o banco não está configurado.
     """
-    if not os.path.exists(CONFIG_FILE):
+    if not os.environ.get('DB_HOST'):
         return None
         
-    with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-        config_data = json.load(file)
-        
-    if "password" in config_data and config_data["password"]:
-        config_data["password"] = decrypt_data(config_data["password"])
-        
-    return config_data
+    return {
+        "nome_base": os.environ.get('CLIENT_NAME', 'Template App GFC'),
+        "host": os.environ.get('DB_HOST'),
+        "port": os.environ.get('DB_PORT', '5432'),
+        "database": os.environ.get('DB_NAME'),
+        "user": os.environ.get('DB_USER'),
+        "password": os.environ.get('DB_PASS')
+    }
