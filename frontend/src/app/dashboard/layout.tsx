@@ -105,20 +105,20 @@ export default function DashboardLayout({
             <div className="menu-group">
               <h3 className="menu-title">Relatórios</h3>
               {renderMenuItem(
-                <span className="flex flex-col">
-                  Transações - POS
-                  <small style={{ fontSize: '10px', opacity: 0.7, fontWeight: 'normal', lineHeight: '1.2' }}>(Lançamentos Manuais)</small>
-                </span>, 
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, 
+                <div style={{ display: 'block', lineHeight: '1.2' }}>
+                  <div style={{ fontSize: '13px' }}>Transações - POS</div>
+                  <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '2px', fontWeight: 'normal' }}>(Lançamentos Manuais)</div>
+                </div>, 
+                null, 
                 '/dashboard/transacoes-pos', 
                 'dre'
               )}
               {renderMenuItem(
-                <span className="flex flex-col">
-                  Transações - Possíveis Duplicadas
-                  <small style={{ fontSize: '10px', opacity: 0.7, fontWeight: 'normal', lineHeight: '1.2' }}>(Transações que exigem análise mais criteriosa)</small>
-                </span>, 
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>, 
+                <div style={{ display: 'block', lineHeight: '1.2', marginTop: '8px' }}>
+                  <div style={{ fontSize: '13px' }}>Transações - Possíveis Duplicadas</div>
+                  <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '2px', fontWeight: 'normal' }}>(Transações que devem ter uma análise mais criteriosa)</div>
+                </div>, 
+                null, 
                 '/dashboard/transacoes-duplicadas', 
                 'custo_medio'
               )}

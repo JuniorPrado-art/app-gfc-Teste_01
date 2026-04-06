@@ -54,6 +54,7 @@ export default function TransacoesPOSPage() {
     
     setError(null);
     setLoading(true);
+    setResultados([]);
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/relatorios/transacoes-pos`, {
@@ -68,12 +69,16 @@ export default function TransacoesPOSPage() {
       
       const json = await res.json();
       if (json.status === 'success') {
-        setResultados(json.data);
+        if (json.data.length === 0) {
+          setError("empty");
+        } else {
+          setResultados(json.data);
+        }
       } else {
-        setError(json.message || "Erro ao consultar dados.");
+        setError("error");
       }
     } catch (err: any) {
-      setError(err.message || "Falha na comunicação com o servidor.");
+      setError("error");
     } finally {
       setLoading(false);
     }
@@ -84,15 +89,8 @@ export default function TransacoesPOSPage() {
       
       <div style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '16px', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '24px' }}>
         <h1 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: 600, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Transações POS <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 'normal' }}>(Lançamentos Manuais)</span>
         </h1>
-
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', color: '#fca5a5', padding: '12px 16px', marginBottom: '24px', borderRadius: '4px' }}>
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: '1', minWidth: '200px' }}>
@@ -143,6 +141,13 @@ export default function TransacoesPOSPage() {
           </button>
         </form>
       </div>
+
+      {error && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', color: '#fca5a5', padding: '16px', borderRadius: '4px' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold' }}>Mensagem de Erro</h3>
+          <p style={{ margin: 0, fontSize: '14px' }}>Não há resultados a serem apresentados ou ocorreu um erro na busca. Por favor, acionar o suporte.</p>
+        </div>
+      )}
 
       {resultados.length > 0 && (
         <div style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '16px', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

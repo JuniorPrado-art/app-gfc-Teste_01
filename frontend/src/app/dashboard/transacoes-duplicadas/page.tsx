@@ -30,6 +30,7 @@ export default function TransacoesDuplicadasPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultados, setResultados] = useState<DuplicadaRowData[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/empresas`)
@@ -43,17 +44,33 @@ export default function TransacoesDuplicadasPage() {
   }, []);
 
   const formatCurrency = (val: number | string) => {
-    if (val == null) return "R$ 0,00";
-    return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    if (val == null) return "0,00";
+    return Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const formataData = (dataStr: string) => {
-    if (!dataStr) return "-";
+    if (!dataStr) return "";
     const [ano, mes, dia] = dataStr.split(' ')[0].split('-');
     if (!dia || !mes || !ano) return dataStr;
-    const meses = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
-    // Assume-se string segura "YYYY-MM-DD" vinda do backend que forçamos em YYYY-MM-DD
-    return `${dia}/${meses[parseInt(mes, 10)-1]}/${ano}`;
+    return `${dia}/${mes}/${ano}`;
+  };
+
+  const padRight = (str: string, length: number) => {
+    const s = String(str || '').substring(0, length);
+    return s + ' '.repeat(length - s.length);
+  };
+  
+  const padLeft = (str: string, length: number) => {
+    const s = String(str || '').substring(0, length);
+    return ' '.repeat(length - s.length) + s;
+  };
+  
+  const padCenter = (str: string, length: number) => {
+    const s = String(str || '').substring(0, length);
+    const m = length - s.length;
+    const l = Math.floor(m / 2);
+    const r = m - l;
+    return ' '.repeat(l) + s + ' '.repeat(r);
   };
 
   const handleSearch = async (e: FormEvent) => {
@@ -65,6 +82,8 @@ export default function TransacoesDuplicadasPage() {
     
     setError(null);
     setLoading(true);
+    setHasSearched(true);
+    setResultados([]);
     
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/relatorios/transacoes-duplicadas`, {
@@ -79,15 +98,48 @@ export default function TransacoesDuplicadasPage() {
       
       const json = await res.json();
       if (json.status === 'success') {
-        setResultados(json.data);
+        if (json.data.length === 0) {
+          setError("empty");
+        } else {
+          setResultados(json.data);
+        }
       } else {
-        setError(json.message || "Erro ao consultar dados.");
+        setError(json.message || "error");
       }
     } catch (err: any) {
-      setError(err.message || "Falha na comunicação com o servidor.");
+      setError("error");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Build the ASCII Table
+  const buildAsciiTable = () => {
+    const headerSep = "+----------------+--------------------------------+--------------+---------+---------------------------------+------------+--------------+--------------+--------------+--------------+--------------+--------------------------------+-------------------+";
+    const headerTitle = "|PLANO DE CONTA  |      FORMA DE PAGAMENTO        |    DATA      |  TURNO  |          CONTA CAIXA            |AUTORIZACAO |  VENCIMENTO  | NUMERO NOTA  | STATUS NOTA  |    VALOR     |   USUARIO    |           EMPRESA              | AUTENTICAÇÃO TEF  |";
+    
+    let table = padCenter("R E L A T O R I O   D U P L I C A D O S", headerSep.length) + "\n\n";
+    table += headerSep + "\n" + headerTitle + "\n" + headerSep + "\n";
+    
+    resultados.forEach(row => {
+      const plano_de_conta = " " + padRight(row.plano_de_conta, 15);
+      const forma_pagamento = " " + padRight(row.forma_pagamento, 31);
+      const data = " " + padRight(formataData(row.data), 13);
+      const turno = padCenter(row.turno.toString(), 9);
+      const conta_caixa = " " + padRight(row.conta_caixa, 32);
+      const autorizacao = " " + padRight(row.autorizacao_tef == 'Sem Autorização TEF' ? 'Sem Autoriza' : row.autorizacao_tef, 11);
+      const vencimento = " " + padRight(formataData(row.vencimento), 13);
+      const num_nota = padCenter(row.numero_nota || '', 14);
+      const status_nota = " " + padRight(row.status_nota || '', 13);
+      const valor = padLeft(formatCurrency(row.valor), 11) + "   ";
+      const usuario = " " + padRight(row.usuario, 13);
+      const empresa = " " + padRight(row.empresa, 31);
+      const tef = " " + padRight(row.autorizacao_tef == 'Sem Autorização TEF' ? 'Sem Autorização' : row.autorizacao_tef, 18);
+      
+      table += `|${plano_de_conta}|${forma_pagamento}|${data}|${turno}|${conta_caixa}|${autorizacao}|${vencimento}|${num_nota}|${status_nota}|${valor}|${usuario}|${empresa}|${tef}|\n`;
+    });
+    table += headerSep;
+    return table;
   };
 
   return (
@@ -95,15 +147,8 @@ export default function TransacoesDuplicadasPage() {
       
       <div style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '16px', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '24px' }}>
         <h1 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: 600, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
           Transações - Possíveis Duplicadas <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 'normal' }}>(Análise Criteriosa)</span>
         </h1>
-
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', color: '#fca5a5', padding: '12px 16px', marginBottom: '24px', borderRadius: '4px' }}>
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: '1', minWidth: '200px' }}>
@@ -155,50 +200,18 @@ export default function TransacoesDuplicadasPage() {
         </form>
       </div>
 
+      {error && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', color: '#fca5a5', padding: '16px', borderRadius: '4px' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold' }}>Mensagem de Erro</h3>
+          <p style={{ margin: 0, fontSize: '14px' }}>Não há resultados a serem apresentados ou ocorreu um erro na busca. Por favor, acionar o suporte.</p>
+        </div>
+      )}
+
       {resultados.length > 0 && (
-        <div style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '16px', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <h2 style={{ color: '#f8fafc', fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>
-            R E L A T O R I O   D U P L I C A D O S ({resultados.length} registros suspeitos)
-          </h2>
-          
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1400px' }}>
-              <thead>
-                <tr style={{ background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', fontSize: '13px' }}>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>PLANO DE CONTA</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>FORMA DE PAGAMENTO</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>DATA</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>TURNO</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>CONTA CAIXA</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>AUTORIZACAO</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>VENCIMENTO</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>NUMERO NOTA</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>STATUS NOTA</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>VALOR</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>USUARIO</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #334155' }}>EMPRESA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resultados.map((row, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid rgba(51, 65, 85, 0.5)', transition: 'background 0.2s', backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(30, 41, 59, 0.3)' }}>
-                    <td style={{ padding: '12px', color: '#f1f5f9', fontSize: '13px' }}>{row.plano_de_conta}</td>
-                    <td style={{ padding: '12px', color: '#f1f5f9', fontSize: '13px' }}>{row.forma_pagamento}</td>
-                    <td style={{ padding: '12px', color: '#94a3b8', fontSize: '13px', whiteSpace: 'nowrap' }}>{formataData(row.data)}</td>
-                    <td style={{ padding: '12px', color: '#94a3b8', fontSize: '13px' }}>{row.turno}</td>
-                    <td style={{ padding: '12px', color: '#f1f5f9', fontSize: '13px' }}>{row.conta_caixa}</td>
-                    <td style={{ padding: '12px', color: '#eab308', fontSize: '13px' }}>{row.autorizacao_tef}</td>
-                    <td style={{ padding: '12px', color: '#94a3b8', fontSize: '13px', whiteSpace: 'nowrap' }}>{formataData(row.vencimento)}</td>
-                    <td style={{ padding: '12px', color: '#cbd5e1', fontSize: '13px' }}>{row.numero_nota || '-'}</td>
-                    <td style={{ padding: '12px', color: '#cbd5e1', fontSize: '13px', fontWeight: 500 }}>{row.status_nota || '-'}</td>
-                    <td style={{ padding: '12px', color: '#f43f5e', fontSize: '13px', fontWeight: 600 }}>{formatCurrency(row.valor)}</td>
-                    <td style={{ padding: '12px', color: '#f1f5f9', fontSize: '13px' }}>{row.usuario}</td>
-                    <td style={{ padding: '12px', color: '#f1f5f9', fontSize: '13px' }}>{row.empresa}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div style={{ background: '#4c2e6b', padding: '24px', borderRadius: '8px', border: '1px solid #7e5299', overflowX: 'auto' }}>
+          <pre style={{ margin: 0, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '12px', color: '#fdfdfd', minWidth: '1300px' }}>
+            {buildAsciiTable()}
+          </pre>
         </div>
       )}
     </div>
