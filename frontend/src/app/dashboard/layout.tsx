@@ -44,7 +44,7 @@ export default function DashboardLayout({
     });
   };
 
-  const renderMenuItem = (label: string, icon: React.ReactNode, path: string, key: string) => {
+  const renderMenuItem = (label: React.ReactNode, icon: React.ReactNode, path: string, key: string) => {
     // Se for cliente e foi ocultado pelo Admin, não renderiza
     if (role !== 'admin' && visibility[key] === false) return null;
     
@@ -104,8 +104,24 @@ export default function DashboardLayout({
           {isGroupVisible(['dre', 'custo_medio']) && (
             <div className="menu-group">
               <h3 className="menu-title">Relatórios</h3>
-              {renderMenuItem('DRE', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, '/dashboard/dre', 'dre')}
-              {renderMenuItem('Custo Médio', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>, '/dashboard/custo-medio', 'custo_medio')}
+              {renderMenuItem(
+                <span className="flex flex-col">
+                  Transações - POS
+                  <small style={{ fontSize: '10px', opacity: 0.7, fontWeight: 'normal', lineHeight: '1.2' }}>(Lançamentos Manuais)</small>
+                </span>, 
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, 
+                '/dashboard/transacoes-pos', 
+                'dre'
+              )}
+              {renderMenuItem(
+                <span className="flex flex-col">
+                  Transações - Possíveis Duplicadas
+                  <small style={{ fontSize: '10px', opacity: 0.7, fontWeight: 'normal', lineHeight: '1.2' }}>(Transações que exigem análise mais criteriosa)</small>
+                </span>, 
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>, 
+                '/dashboard/transacoes-duplicadas', 
+                'custo_medio'
+              )}
             </div>
           )}
 
