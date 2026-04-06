@@ -782,21 +782,22 @@ def get_transacoes_duplicadas():
         
         query = """
 SELECT
-    mm.conta_debitar AS plano_de_conta,
-    mm.nome AS forma_pagamento,
+    mm.conta_debitar,
+    mm.nome AS nome_cartao,
     m.data,
     m.turno,
-    c.nome AS conta_caixa,
+    c.nome AS nome_caixa,
+    m.documento,
+    m.vencto,
+    nf.numero_nota,
+    nfts.nome AS status,
+    m.valor,
+    m.usuario,
+    e.nome_reduzido AS nome_empresa,
     CASE 
         WHEN tt.autorizacao IS NOT NULL THEN tt.autorizacao 
         ELSE 'Sem Autorização TEF' 
-    END AS autorizacao_tef,
-    m.vencto AS vencimento,
-    nf.numero_nota,
-    nfts.nome AS status_nota,
-    m.valor,
-    m.usuario,
-    e.nome_reduzido AS empresa
+    END AS autorizacao_tef
 FROM movto m
 INNER JOIN motivo_movto AS mm ON m.motivo = mm.grid
 LEFT JOIN empresa AS e ON e.grid = m.empresa
