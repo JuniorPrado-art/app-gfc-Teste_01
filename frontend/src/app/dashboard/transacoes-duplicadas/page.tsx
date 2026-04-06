@@ -31,6 +31,7 @@ export default function TransacoesDuplicadasPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultados, setResultados] = useState<DuplicadaRowData[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/empresas`)
@@ -64,6 +65,7 @@ export default function TransacoesDuplicadasPage() {
     
     setError(null);
     setLoading(true);
+    setHasSearched(false);
     setResultados([]);
     
     try {
@@ -78,17 +80,15 @@ export default function TransacoesDuplicadasPage() {
       });
       
       const json = await res.json();
+      setHasSearched(true);
       if (json.status === 'success') {
-        if (json.data.length === 0) {
-          setError("empty");
-        } else {
-          setResultados(json.data);
-        }
+        setResultados(json.data);
       } else {
-        setError(json.message || "error");
+        setError(json.message || "Erro retornado pelo servidor.");
       }
     } catch (err: any) {
-      setError("error");
+      setHasSearched(true);
+      setError("Falha na comunicação com a API. Verifique a conexão com o banco.");
     } finally {
       setLoading(false);
     }
@@ -155,7 +155,14 @@ export default function TransacoesDuplicadasPage() {
       {error && (
         <div style={{ background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', color: '#fca5a5', padding: '16px', borderRadius: '4px' }}>
           <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold' }}>Mensagem de Erro</h3>
-          <p style={{ margin: 0, fontSize: '14px' }}>Não há resultados a serem apresentados ou ocorreu um erro na busca. Por favor, acione o suporte.</p>
+          <p style={{ margin: 0, fontSize: '14px' }}>Erro ao consultar: {error} Por favor, acione o suporte.</p>
+        </div>
+      )}
+
+      {!error && hasSearched && resultados.length === 0 && (
+        <div style={{ background: 'rgba(59, 130, 246, 0.1)', borderLeft: '4px solid #3b82f6', color: '#93c5fd', padding: '16px', borderRadius: '4px' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 'bold', color: '#60a5fa' }}>Nenhum Resultado Encontrado</h3>
+          <p style={{ margin: 0, fontSize: '14px' }}>A busca foi concluída com sucesso, mas não há transações para este período e empresa.</p>
         </div>
       )}
 
