@@ -107,7 +107,6 @@ export default function DashboardLayout({
               {renderMenuItem(
                 <div style={{ display: 'block', lineHeight: '1.2' }}>
                   <div style={{ fontSize: '13px' }}>Transações - POS</div>
-                  <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '2px', fontWeight: 'normal' }}>(Lançamentos Manuais)</div>
                 </div>, 
                 null, 
                 '/dashboard/transacoes-pos', 
@@ -116,7 +115,6 @@ export default function DashboardLayout({
               {renderMenuItem(
                 <div style={{ display: 'block', lineHeight: '1.2', marginTop: '8px' }}>
                   <div style={{ fontSize: '13px' }}>Transações - Possíveis Duplicadas</div>
-                  <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '2px', fontWeight: 'normal' }}>(Transações que devem ter uma análise mais criteriosa)</div>
                 </div>, 
                 null, 
                 '/dashboard/transacoes-duplicadas', 

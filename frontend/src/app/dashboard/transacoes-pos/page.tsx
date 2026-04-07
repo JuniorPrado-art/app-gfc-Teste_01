@@ -52,12 +52,12 @@ export default function TransacoesPOSPage() {
       setError("Por favor, preencha todos os campos do filtro.");
       return;
     }
-    
+
     setError(null);
     setLoading(true);
     setHasSearched(false);
     setResultados([]);
-    
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/relatorios/transacoes-pos`, {
         method: 'POST',
@@ -68,7 +68,7 @@ export default function TransacoesPOSPage() {
           codigo_empresa: codigoEmpresa
         })
       });
-      
+
       const json = await res.json();
       setHasSearched(true);
       if (json.status === 'success') {
@@ -86,7 +86,7 @@ export default function TransacoesPOSPage() {
 
   return (
     <div className="fade-in" style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       <div style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '16px', border: '1px solid rgba(51, 65, 85, 0.8)', padding: '24px' }}>
         <h1 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: 600, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           Transações POS <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 'normal' }}>(Lançamentos Manuais)</span>
@@ -95,20 +95,20 @@ export default function TransacoesPOSPage() {
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: '1', minWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>Data Inicial</label>
-            <input 
-              type="date" 
-              value={dataInicial} 
+            <input
+              type="date"
+              value={dataInicial}
               onChange={e => setDataInicial(e.target.value)}
               required
               style={{ width: '100%', padding: '12px', background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(71, 85, 105, 0.8)', borderRadius: '8px', color: 'white' }}
             />
           </div>
-          
+
           <div style={{ flex: '1', minWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>Data Final</label>
-            <input 
-              type="date" 
-              value={dataFinal} 
+            <input
+              type="date"
+              value={dataFinal}
               onChange={e => setDataFinal(e.target.value)}
               required
               style={{ width: '100%', padding: '12px', background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(71, 85, 105, 0.8)', borderRadius: '8px', color: 'white' }}
@@ -117,8 +117,8 @@ export default function TransacoesPOSPage() {
 
           <div style={{ flex: '2', minWidth: '250px' }}>
             <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>Empresa</label>
-            <select 
-              value={codigoEmpresa} 
+            <select
+              value={codigoEmpresa}
               onChange={e => setCodigoEmpresa(e.target.value)}
               required
               style={{ width: '100%', padding: '12px', background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(71, 85, 105, 0.8)', borderRadius: '8px', color: 'white' }}
@@ -132,8 +132,8 @@ export default function TransacoesPOSPage() {
             </select>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             style={{ padding: '12px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s', opacity: loading ? 0.7 : 1 }}
           >
@@ -161,7 +161,7 @@ export default function TransacoesPOSPage() {
           <h2 style={{ color: '#f8fafc', fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>
             R E L A T O R I O   P O S ({resultados.length} registros encontrados)
           </h2>
-          
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
               <thead>
