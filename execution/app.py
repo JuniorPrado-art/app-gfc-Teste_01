@@ -11,6 +11,8 @@ import email.utils
 from config_manager import save_config, load_config
 import threading
 import time
+import requests
+import base64
 
 ALERT_STATE_FILE = 'alert_state.json'
 
@@ -139,6 +141,47 @@ def auth_login():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+def sync_file_to_github(filename):
+    github_token = os.environ.get('GITHUB_TOKEN')
+    github_repo = os.environ.get('GITHUB_REPO')
+    
+    if not github_token or not github_repo:
+        return
+        
+    try:
+        with open(filename, 'rb') as f:
+            content = f.read()
+        encoded_content = base64.b64encode(content).decode('utf-8')
+        
+        path_in_repo = f"execution/{filename}"
+        url = f"https://api.github.com/repos/{github_repo}/contents/{path_in_repo}"
+        headers = {
+            "Authorization": f"token {github_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        sha = None
+        resp_get = requests.get(url, headers=headers)
+        if resp_get.status_code == 200:
+            sha = resp_get.json().get('sha')
+            
+        data = {
+            "message": f"System: Auto-update {filename} config via GFC App",
+            "content": encoded_content
+        }
+        if sha:
+            data["sha"] = sha
+            
+        def _bg_put():
+            try:
+                requests.put(url, headers=headers, json=data)
+            except:
+                pass
+        
+        threading.Thread(target=_bg_put, daemon=True).start()
+    except Exception as e:
+        print(f"Erro no GitHub Sync de {filename}: {e}")
+
 VISIBILITY_FILE = 'visibility.json'
 
 @app.route('/api/config/visibility', methods=['GET'])
@@ -153,6 +196,7 @@ def save_visibility():
     data = request.json
     with open(VISIBILITY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    sync_file_to_github(VISIBILITY_FILE)
     return jsonify({"status": "success", "message": "Configurações de menus atualizadas."})
 
 EMAIL_CONFIG_FILE = 'email_config.json'
@@ -181,6 +225,7 @@ def save_email_config():
 
     with open(EMAIL_CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    sync_file_to_github(EMAIL_CONFIG_FILE)
     return jsonify({"status": "success", "message": "Configurações de E-mail salvas."})
 
 @app.route('/api/config/alertas', methods=['GET'])
@@ -195,6 +240,7 @@ def save_alertas_config():
     data = request.json
     with open(ALERTAS_CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    sync_file_to_github(ALERTAS_CONFIG_FILE)
     return jsonify({"status": "success", "message": "Configurações de Alertas salvas."})
 
 
@@ -560,6 +606,7 @@ class AlertManager:
     def save_state(self):
         with open(ALERT_STATE_FILE, 'w', encoding='utf-8') as f:
             json.dump(self.state, f)
+        sync_file_to_github(ALERT_STATE_FILE)
 
     def set_estado(self, tipo, status, skip_first=False):
         if tipo not in ["prevendas", "sincronia"]:
