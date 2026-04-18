@@ -13,6 +13,7 @@ import threading
 import time
 import requests
 import base64
+from werkzeug.security import generate_password_hash, check_password_hash
 
 ALERT_STATE_FILE = 'alert_state.json'
 
@@ -91,55 +92,32 @@ def auth_login():
         return jsonify({"status": "error", "message": "Usuário e senha são obrigatórios."}), 400
 
     # 1. Checa conta Admin Local
-    if username == "AppComercial" and password == "ComerInfor@001":
+    ADMIN_USER_HASH = "scrypt:32768:8:1$PCGOicMMQocF5fk1$03f8eb5f33774b94a5b64961a0cac772c0ef9276bd90c076cefdf733cd21fd801f0c739296ccb92cdddfd6f13b89d467b6aa3535ed3ead9897ca07a251646edc"
+    ADMIN_PASS_HASH = "scrypt:32768:8:1$rMwYj5bhifNWA0HF$38a54c8415738c6d3e0f63243493fdad76abd4b9d041d867d9b1b2a55f2a1d8769bc3d87c4453f078465380eba08aee1549483a48d15d9a7c1e836f28b539ce9"
+
+    if check_password_hash(ADMIN_USER_HASH, username) and check_password_hash(ADMIN_PASS_HASH, password):
         return jsonify({"status": "success", "role": "admin", "message": "Login Administrador bem-sucedido."})
 
-    # 2. Checa conta Cliente no PostgreSQL
-    config = load_config()
-    if not config:
-        return jsonify({"status": "error", "message": "Sistema não configurado. Por favor, configure a conexão primeiro."}), 400
-
-    try:
-        conn = psycopg2.connect(
-            host=config['host'],
-            port=config.get('port', 5432),
-            database=config['database'],
-            user=config['user'],
-            password=config['password']
-        )
-        conn.set_client_encoding('WIN1252')
-        cursor = conn.cursor()
-        
-        # 1. Tenta validar considerando senha em texto limpo ou MD5 direto no PostgreSQL
-        cursor.execute("""
-            SELECT * FROM usuario 
-            WHERE nome = %s AND status = 'A' AND (senha = %s OR senha = md5(%s))
-        """, (username, password, password))
-        user_row = cursor.fetchone()
-        
-        # 2. Se não encontrou, aplica o Fallback (Plano C) solicitado: 
-        # Tentar achar usando apenas o Nome para validar a "existência/status" do usuário.
-        # Isso contorna hashes complexas como SCRAM-SHA-256 ou BCrypt se não tivermos as chaves.
-        if not user_row:
-            cursor.execute("SELECT * FROM usuario WHERE nome = %s AND status = 'A'", (username,))
-            fallback_row = cursor.fetchone()
+    # 2. Checa conta Cliente no arquivo local users_config.json
+    USERS_CONFIG_FILE = 'users_config.json'
+    if os.path.exists(USERS_CONFIG_FILE):
+        try:
+            with open(USERS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                users_data = json.load(f)
             
-            # Se o usuário existe e está Ativo, vamos considerar autenticado pelo contorno
-            if fallback_row:
-                user_row = fallback_row
-        
-        cursor.close()
-        conn.close()
+            users_list = users_data.get('users', [])
+            for user in users_list:
+                if user.get('username') == username:
+                    # Validar a senha com hash
+                    stored_hash = user.get('password')
+                    if stored_hash and check_password_hash(stored_hash, password):
+                        return jsonify({"status": "success", "role": "client", "message": "Autenticado com sucesso."})
+                    
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Erro interno ao validar login: {str(e)}"}), 500
 
-        if user_row:
-            return jsonify({"status": "success", "role": "client", "message": "Autenticado com sucesso."})
-        else:
-            return jsonify({"status": "error", "message": "Usuário ou senha inválidos."}), 401
-            
-    except psycopg2.Error as e:
-        return jsonify({"status": "error", "message": "Erro de conexão ao banco na validação do login."}), 500
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    # Se chegou aqui, não autenticou nem como Admin, nem como Cliente
+    return jsonify({"status": "error", "message": "Usuário ou senha inválidos."}), 401
 
 def sync_file_to_github(filename):
     github_token = os.environ.get('GITHUB_TOKEN')
@@ -199,8 +177,55 @@ def save_visibility():
     sync_file_to_github(VISIBILITY_FILE)
     return jsonify({"status": "success", "message": "Configurações de menus atualizadas."})
 
+USERS_CONFIG_FILE = 'users_config.json'
 EMAIL_CONFIG_FILE = 'email_config.json'
 ALERTAS_CONFIG_FILE = 'alertas_config.json'
+
+@app.route('/api/config/usuarios', methods=['GET'])
+def get_usuarios_config():
+    if os.path.exists(USERS_CONFIG_FILE):
+        with open(USERS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # Ofuscar as senhas para o frontend
+            if 'users' in data:
+                for user in data['users']:
+                    user['password'] = "********"
+            return jsonify({"status": "success", "data": data})
+    return jsonify({"status": "success", "data": {"users": []}})
+
+@app.route('/api/config/usuarios', methods=['POST'])
+def save_usuarios_config():
+    data = request.json
+    new_users = data.get('users', [])
+    
+    # Carregar dados antigos para recuperar a hash se a senha vier ofuscada
+    old_data = {"users": []}
+    if os.path.exists(USERS_CONFIG_FILE):
+        with open(USERS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            try:
+                old_data = json.load(f)
+            except json.JSONDecodeError:
+                pass
+                
+    old_users_map = {str(u.get('id')): u for u in old_data.get('users', [])}
+    
+    for user in new_users:
+        uid = str(user.get('id'))
+        if user.get('password') == "********":
+            # Mantém a hash antiga
+            if uid in old_users_map:
+                user['password'] = old_users_map[uid].get('password', '')
+            else:
+                user['password'] = '' # Fallback caso envie ofuscado mas não exista (não deve ocorrer)
+        elif user.get('password'):
+            # Gera nova hash
+            user['password'] = generate_password_hash(user['password'])
+
+    with open(USERS_CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump({"users": new_users}, f, ensure_ascii=False, indent=4)
+        
+    sync_file_to_github(USERS_CONFIG_FILE)
+    return jsonify({"status": "success", "message": "Usuários salvos com sucesso."})
 
 @app.route('/api/config/email', methods=['GET'])
 def get_email_config():
