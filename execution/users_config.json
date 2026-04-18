@@ -13,10 +13,16 @@
             "username": "Oswaldo"
         },
         {
-            "id": "1776543331506",
-            "username": "Danilo",
             "email": "danilo.honorato@franqueadolinx.com.br",
-            "password": "scrypt:32768:8:1$bOyc7PSdCmdKof53$06a562a3fce6b643cb96d456f2f70b3c0594473abe6c22026936a49a4cb1afb24ad096da1634b9a783147a2a9fc30dc33213403ff3a2960e5ba3b28ac5025a2b"
+            "id": "1776543331506",
+            "password": "scrypt:32768:8:1$bOyc7PSdCmdKof53$06a562a3fce6b643cb96d456f2f70b3c0594473abe6c22026936a49a4cb1afb24ad096da1634b9a783147a2a9fc30dc33213403ff3a2960e5ba3b28ac5025a2b",
+            "username": "Danilo"
+        },
+        {
+            "id": "1776543359304",
+            "username": "Milton",
+            "email": "milton.ferreira@franqueadolinx.com.br",
+            "password": "scrypt:32768:8:1$A1HzEbrbf93dmu1g$4ac8b539e5c7dc3febaf6dc45bdc0775ac2edece3daf07d89307822f4d2b5f29196fcd86d5e819f99328776e9408b95ad5664e9de197099bae7b529335118ac1"
         }
     ]
 }
