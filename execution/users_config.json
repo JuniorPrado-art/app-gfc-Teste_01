@@ -22,7 +22,7 @@
             "id": "1776543359304",
             "username": "Milton",
             "email": "milton.ferreira@franqueadolinx.com.br",
-            "password": "scrypt:32768:8:1$A1HzEbrbf93dmu1g$4ac8b539e5c7dc3febaf6dc45bdc0775ac2edece3daf07d89307822f4d2b5f29196fcd86d5e819f99328776e9408b95ad5664e9de197099bae7b529335118ac1"
+            "password": "scrypt:32768:8:1$0oDSSaYSO60IqArN$1c20158cbab839c6477711db3e9567c0e18afb01cfcde2b6c560984011a7d4e3afa76e73054c94229c881b5d80c5d25acafef5cb83b47bdef814a98e17f5abde"
         }
     ]
 }
