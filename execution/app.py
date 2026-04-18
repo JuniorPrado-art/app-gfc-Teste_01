@@ -809,14 +809,24 @@ class AlertManager:
         self.threads[tipo] = threading.Thread(target=self._loop, args=(tipo, skip_first), daemon=True)
         self.threads[tipo].start()
 
+    def _is_active(self, tipo):
+        if os.path.exists(ALERT_STATE_FILE):
+            try:
+                with open(ALERT_STATE_FILE, 'r', encoding='utf-8') as f:
+                    st = json.load(f)
+                    return st.get(tipo, False)
+            except:
+                pass
+        return False
+
     def _loop(self, tipo, skip_first=False):
         if skip_first:
             for _ in range(900):
-                if not self.state.get(tipo):
+                if not self._is_active(tipo):
                     break
                 time.sleep(1)
 
-        while self.state.get(tipo):
+        while self._is_active(tipo):
             try:
                 # Com is_background, processa e-mail apenas se pendentes > 0.
                 executar_disparo_alerta(tipo, force_send=False)
@@ -825,7 +835,7 @@ class AlertManager:
             
             # Pausa de 15 minutos checando interrupção a cada 1 segundo
             for _ in range(900):
-                if not self.state.get(tipo):
+                if not self._is_active(tipo):
                     break
                 time.sleep(1)
 
