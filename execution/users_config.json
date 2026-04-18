@@ -7,10 +7,16 @@
             "username": "Arthur"
         },
         {
-            "id": "1776543299974",
-            "username": "Oswaldo",
             "email": "oswaldo.correa@franqueadolinx.com.br",
-            "password": "scrypt:32768:8:1$lTpPUWZ3aUt27xcA$9895873dbee53a92e781189ca16f1c531d5e1cd2cb367902dbe96562d824deb87b6472349e31c76cd6eeb2bd9e2742684c8f05d274795ab61d49a983679282ee"
+            "id": "1776543299974",
+            "password": "scrypt:32768:8:1$lTpPUWZ3aUt27xcA$9895873dbee53a92e781189ca16f1c531d5e1cd2cb367902dbe96562d824deb87b6472349e31c76cd6eeb2bd9e2742684c8f05d274795ab61d49a983679282ee",
+            "username": "Oswaldo"
+        },
+        {
+            "id": "1776543331506",
+            "username": "Danilo",
+            "email": "danilo.honorato@franqueadolinx.com.br",
+            "password": "scrypt:32768:8:1$bOyc7PSdCmdKof53$06a562a3fce6b643cb96d456f2f70b3c0594473abe6c22026936a49a4cb1afb24ad096da1634b9a783147a2a9fc30dc33213403ff3a2960e5ba3b28ac5025a2b"
         }
     ]
 }
