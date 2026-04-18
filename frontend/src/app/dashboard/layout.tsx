@@ -179,7 +179,7 @@ export default function DashboardLayout({
         
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
           <button 
-            onClick={() => alert('A funcionalidade de reset/alteração de senha será implementada em breve!')}
+            onClick={() => window.location.href = '/dashboard/alterar-senha'}
             style={{ background: 'transparent', border: '1px solid #334155', borderRadius: '4px', padding: '4px 8px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer', transition: 'background 0.2s' }}
             onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
             onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}

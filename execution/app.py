@@ -13,6 +13,8 @@ import threading
 import time
 import requests
 import base64
+import secrets
+import string
 from werkzeug.security import generate_password_hash, check_password_hash
 
 ALERT_STATE_FILE = 'alert_state.json'
@@ -118,6 +120,160 @@ def auth_login():
 
     # Se chegou aqui, não autenticou nem como Admin, nem como Cliente
     return jsonify({"status": "error", "message": "Usuário ou senha inválidos."}), 401
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def auth_reset_password():
+    data = request.json
+    identifier = data.get('identifier')
+    
+    if not identifier:
+        return jsonify({"status": "error", "message": "Informe um usuário ou e-mail."}), 400
+
+    USERS_CONFIG_FILE = 'users_config.json'
+    EMAIL_CONFIG_FILE = 'email_config.json'
+
+    if not os.path.exists(USERS_CONFIG_FILE):
+        return jsonify({"status": "error", "message": "Nenhum cliente configurado."}), 404
+
+    target_user = None
+    users_data = {"users": []}
+    
+    with open(USERS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+        try:
+            users_data = json.load(f)
+        except Exception:
+            pass
+
+    # Procurar usuário pelo username ou email
+    for idx, user in enumerate(users_data.get('users', [])):
+        if user.get('username') == identifier or user.get('email') == identifier:
+            target_user = user
+            target_idx = idx
+            break
+
+    if not target_user or not target_user.get('email'):
+        return jsonify({"status": "error", "message": "Usuário/E-mail não encontrado ou sem e-mail cadastrado."}), 404
+
+    # Gerar senha temporária
+    alfabeto = string.ascii_letters + string.digits
+    temp_password = ''.join(secrets.choice(alfabeto) for _ in range(8))
+    
+    # Salvar nova hash
+    target_user['password'] = generate_password_hash(temp_password)
+    users_data['users'][target_idx] = target_user
+
+    with open(USERS_CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users_data, f, ensure_ascii=False, indent=4)
+        
+    sync_file_to_github(USERS_CONFIG_FILE)
+
+    # Disparar E-mail
+    if not os.path.exists(EMAIL_CONFIG_FILE):
+        return jsonify({"status": "error", "message": "Servidor de e-mail não configurado pelo Administrador."}), 500
+        
+    try:
+        with open(EMAIL_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            smtp_cfg = json.load(f)
+            
+        remetente = smtp_cfg.get('email')
+        senha = smtp_cfg.get('password')
+        host = smtp_cfg.get('host')
+        porta = smtp_cfg.get('port', 587)
+
+        if not remetente or not senha or not host:
+            return jsonify({"status": "error", "message": "Configurações de SMTP incompletas."}), 500
+
+        assunto = "[Agente GFC] Redefinição de Senha"
+        corpo = f'''
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #334155;">
+            <h2>Redefinição de Senha Solicitada</h2>
+            <p>Olá, <strong>{target_user.get('username')}</strong>.</p>
+            <p>Sua nova senha de acesso temporária foi gerada com sucesso.</p>
+            <p style="padding: 12px; background: #f1f5f9; border-radius: 6px; font-size: 18px; font-family: monospace; letter-spacing: 2px;">
+                <strong>{temp_password}</strong>
+            </p>
+            <p>Por favor, acesse o painel GFC e utilize a opção "Alterar senha" na barra lateral para definir sua senha definitiva.</p>
+        </div>
+        '''
+
+        msg = MIMEMultipart()
+        msg['From'] = email.utils.formataddr(('Comercial Informática App', remetente))
+        msg['To'] = target_user.get('email')
+        msg['Subject'] = assunto
+        msg.attach(MIMEText(corpo, 'html'))
+        
+        if int(porta) == 465:
+            server = smtplib.SMTP_SSL(host, int(porta))
+            server.login(remetente, senha)
+        else:
+            server = smtplib.SMTP(host, int(porta))
+            server.starttls()
+            server.login(remetente, senha)
+            
+        server.send_message(msg)
+        server.quit()
+
+        # Ocultamos a maior parte do email na resposta
+        email_parts = target_user.get('email').split('@')
+        email_mascarado = email_parts[0][:3] + '***@' + email_parts[1]
+
+        return jsonify({"status": "success", "message": f"Uma senha temporária foi enviada para {email_mascarado}"})
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Erro ao enviar o e-mail: {str(e)}"}), 500
+
+
+@app.route('/api/auth/change-password', methods=['POST'])
+def auth_change_password():
+    data = request.json
+    username = data.get('username')
+    senha_atual = data.get('senha_atual')
+    nova_senha = data.get('nova_senha')
+
+    if not username or not senha_atual or not nova_senha:
+        return jsonify({"status": "error", "message": "Todos os campos são obrigatórios."}), 400
+
+    # 1. Tentar alterar para o Admin Local primeiro
+    ADMIN_USER_HASH = "scrypt:32768:8:1$PCGOicMMQocF5fk1$03f8eb5f33774b94a5b64961a0cac772c0ef9276bd90c076cefdf733cd21fd801f0c739296ccb92cdddfd6f13b89d467b6aa3535ed3ead9897ca07a251646edc"
+    ADMIN_PASS_HASH = "scrypt:32768:8:1$rMwYj5bhifNWA0HF$38a54c8415738c6d3e0f63243493fdad76abd4b9d041d867d9b1b2a55f2a1d8769bc3d87c4453f078465380eba08aee1549483a48d15d9a7c1e836f28b539ce9"
+
+    if check_password_hash(ADMIN_USER_HASH, username):
+        # A senha do Admin está hardcoded no código (em hash). Não podemos alterá-la via JSON.
+        # Avisar ao Admin que a senha dele só pode ser alterada via código-fonte para maior segurança.
+        return jsonify({"status": "error", "message": "A senha do Administrador base deve ser alterada diretamente na configuração do sistema por segurança."}), 403
+
+    USERS_CONFIG_FILE = 'users_config.json'
+    if not os.path.exists(USERS_CONFIG_FILE):
+        return jsonify({"status": "error", "message": "Nenhum cliente configurado."}), 404
+
+    try:
+        with open(USERS_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            users_data = json.load(f)
+            
+        users_list = users_data.get('users', [])
+        user_found = False
+        
+        for idx, user in enumerate(users_list):
+            if user.get('username') == username:
+                user_found = True
+                stored_hash = user.get('password')
+                if stored_hash and check_password_hash(stored_hash, senha_atual):
+                    # Validou, aplicar nova senha
+                    users_data['users'][idx]['password'] = generate_password_hash(nova_senha)
+                    
+                    with open(USERS_CONFIG_FILE, 'w', encoding='utf-8') as f:
+                        json.dump(users_data, f, ensure_ascii=False, indent=4)
+                        
+                    sync_file_to_github(USERS_CONFIG_FILE)
+                    return jsonify({"status": "success", "message": "Senha alterada com sucesso!"})
+                else:
+                    return jsonify({"status": "error", "message": "A senha atual informada está incorreta."}), 401
+                    
+        if not user_found:
+            return jsonify({"status": "error", "message": "Usuário não encontrado."}), 404
+                
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Erro interno: {str(e)}"}), 500
 
 def sync_file_to_github(filename):
     github_token = os.environ.get('GITHUB_TOKEN')

@@ -4,6 +4,9 @@ import { useState } from 'react';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetInput, setResetInput] = useState('');
+  
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -15,6 +18,36 @@ export default function Login() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setToast(null);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: resetInput }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        setToast({ message: data.message, type: 'success' });
+        setTimeout(() => {
+          setIsResetting(false);
+          setResetInput('');
+          setToast(null);
+        }, 3000);
+      } else {
+        setToast({ message: data.message || 'Erro ao redefinir senha.', type: 'error' });
+      }
+    } catch (error) {
+      setToast({ message: 'Falha na conexão com o serviço local Python.', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -76,62 +109,103 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
-
-          <div className="input-group">
-            <label className="input-label">Usuário</label>
-            <input
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="gfc-input"
-              placeholder="Digite seu usuário..."
-              required
-            />
-          </div>
-
-          <div className="input-group" style={{ position: 'relative' }}>
-            <label className="input-label">Senha</label>
-            <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={handleInputChange}
-              className="gfc-input"
-              placeholder="••••••••"
-              required
-              style={{ paddingRight: '40px' }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '12px',
-                top: '36px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#94a3b8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              title={showPassword ? "Ocultar senha" : "Mostrar senha"}
-            >
-              {showPassword ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              )}
+        {isResetting ? (
+          <form onSubmit={handleResetPassword} style={{ textAlign: 'left' }}>
+            <div className="input-group">
+              <label className="input-label">Usuário ou E-mail</label>
+              <input
+                name="resetInput"
+                type="text"
+                value={resetInput}
+                onChange={(e) => setResetInput(e.target.value)}
+                className="gfc-input"
+                placeholder="Digite seu usuário ou e-mail..."
+                required
+              />
+            </div>
+            
+            <button type="submit" className="gfc-button primary" disabled={loading} style={{ width: '100%', marginTop: '8px' }}>
+              {loading ? 'Enviando...' : 'Recuperar Senha'}
             </button>
-          </div>
+            
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <button 
+                type="button" 
+                onClick={() => { setIsResetting(false); setToast(null); }} 
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Voltar para o Login
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleLogin} style={{ textAlign: 'left' }}>
 
-          <button type="submit" className="gfc-button primary" disabled={loading} style={{ width: '100%', marginTop: '8px' }}>
-            {loading ? 'Validando...' : 'Acessar Painel'}
-          </button>
-        </form>
+            <div className="input-group">
+              <label className="input-label">Usuário</label>
+              <input
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleInputChange}
+                className="gfc-input"
+                placeholder="Digite seu usuário..."
+                required
+              />
+            </div>
+
+            <div className="input-group" style={{ position: 'relative' }}>
+              <label className="input-label">Senha</label>
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleInputChange}
+                className="gfc-input"
+                placeholder="••••••••"
+                required
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '36px',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
+            </div>
+
+            <button type="submit" className="gfc-button primary" disabled={loading} style={{ width: '100%', marginTop: '8px' }}>
+              {loading ? 'Validando...' : 'Acessar Painel'}
+            </button>
+            
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <button 
+                type="button" 
+                onClick={() => { setIsResetting(true); setToast(null); }} 
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
