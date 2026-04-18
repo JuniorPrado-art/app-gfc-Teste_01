@@ -1,10 +1,16 @@
 {
     "users": [
         {
-            "id": "1776543266127",
-            "username": "Arthur",
             "email": "arthur.albertini@franqueadolinx.com.br",
-            "password": "scrypt:32768:8:1$DuMh9rXkBlnr6jax$ffde57f53eddde943f160573365ec75d25cbfb78aa33abdf78462aa9d3f8f172511bbc3252d842bf59674752b555e28e527dace6e9d38e632e50632968dc51d5"
+            "id": "1776543266127",
+            "password": "scrypt:32768:8:1$DuMh9rXkBlnr6jax$ffde57f53eddde943f160573365ec75d25cbfb78aa33abdf78462aa9d3f8f172511bbc3252d842bf59674752b555e28e527dace6e9d38e632e50632968dc51d5",
+            "username": "Arthur"
+        },
+        {
+            "id": "1776543299974",
+            "username": "Oswaldo",
+            "email": "oswaldo.correa@franqueadolinx.com.br",
+            "password": "scrypt:32768:8:1$lTpPUWZ3aUt27xcA$9895873dbee53a92e781189ca16f1c531d5e1cd2cb367902dbe96562d824deb87b6472349e31c76cd6eeb2bd9e2742684c8f05d274795ab61d49a983679282ee"
         }
     ]
 }
