@@ -1,4 +1,4 @@
 {
-    "custo_medio": false,
-    "chamados": false
+    "chamados": false,
+    "custo_medio": true
 }
