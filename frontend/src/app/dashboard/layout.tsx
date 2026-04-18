@@ -12,6 +12,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [role, setRole] = useState<string>('');
+  const [user, setUser] = useState<string>('');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -22,6 +23,8 @@ export default function DashboardLayout({
       return;
     }
     setRole(storedRole);
+    const storedUser = localStorage.getItem('gfc_user');
+    if (storedUser) setUser(storedUser);
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/visibility`)
       .then(r => r.json())
@@ -154,6 +157,9 @@ export default function DashboardLayout({
           )}
         </nav>
 
+        <div style={{ marginTop: 'auto', padding: '12px 12px 0 12px', textAlign: 'center', color: '#cbd5e1', fontSize: '12px', fontWeight: 600 }}>
+          Olá, {user}
+        </div>
         <a 
           href="https://comercialinformatica.com/" 
           target="_blank" 
@@ -163,13 +169,24 @@ export default function DashboardLayout({
             color: '#64748b', 
             fontSize: '11px', 
             textDecoration: 'none', 
-            padding: '12px 12px',
+            padding: '4px 12px 12px 12px',
             transition: 'color 0.2s',
-            marginTop: 'auto'
+            textAlign: 'center'
           }}
         >
           Comercial Informática
         </a>
+        
+        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <button 
+            onClick={() => alert('A funcionalidade de reset/alteração de senha será implementada em breve!')}
+            style={{ background: 'transparent', border: '1px solid #334155', borderRadius: '4px', padding: '4px 8px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer', transition: 'background 0.2s' }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            Alterar senha
+          </button>
+        </div>
         
         <div style={{ textAlign: 'center', marginBottom: '8px', color: '#64748b', fontSize: '10px' }}>
           Versão {pkg.version}
