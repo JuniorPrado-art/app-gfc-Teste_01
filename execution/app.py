@@ -430,13 +430,10 @@ def get_alertas_config():
 
 @app.route('/api/notifications/vapidPublicKey', methods=['GET'])
 def get_vapid_public_key():
-    config_file = 'users_config.json'
-    if os.path.exists(config_file):
-        with open(config_file, 'r', encoding='utf-8') as f:
-            cfg = json.load(f)
-            if 'vapid_keys' in cfg and 'public_key_b64' in cfg['vapid_keys']:
-                return jsonify({"status": "success", "publicKey": cfg['vapid_keys']['public_key_b64']})
-    return jsonify({"status": "error", "message": "VAPID key not configured"}), 500
+    public_key = os.environ.get('VAPID_PUBLIC_KEY')
+    if public_key:
+        return jsonify({"status": "success", "publicKey": public_key})
+    return jsonify({"status": "error", "message": "VAPID key not configured as environment variable"}), 500
 
 @app.route('/api/notifications/subscribe', methods=['POST'])
 def subscribe_notification():
@@ -582,33 +579,26 @@ def get_sincronia():
 
 
 def send_telegram_alert(mensagem):
-    config_file = 'users_config.json'
-    if not os.path.exists(config_file):
+    token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+    if not token or not chat_id:
         return
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            cfg = json.load(f)
-        if 'telegram_config' in cfg:
-            token = cfg['telegram_config'].get('token')
-            chat_id = cfg['telegram_config'].get('chat_id')
-            if token and chat_id:
-                url = f"https://api.telegram.org/bot{token}/sendMessage"
-                payload = {"chat_id": chat_id, "text": mensagem}
-                requests.post(url, json=payload, timeout=5)
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        payload = {"chat_id": chat_id, "text": mensagem}
+        requests.post(url, json=payload, timeout=5)
     except Exception as e:
         print("Erro Telegram:", e)
 
 def send_webpush_alert(titulo, mensagem):
-    config_file = 'users_config.json'
-    if not os.path.exists(config_file) or not os.path.exists(SUBSCRIPTIONS_FILE):
+    if not os.path.exists(SUBSCRIPTIONS_FILE):
+        return
+        
+    vapid_private_key = os.environ.get('VAPID_PRIVATE_KEY')
+    if not vapid_private_key:
         return
         
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            cfg = json.load(f)
-        vapid_private_path = cfg.get('vapid_keys', {}).get('private_key_path')
-        if not vapid_private_path or not os.path.exists(vapid_private_path):
-            return
             
         with open(SUBSCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
             subs = json.load(f)
@@ -623,7 +613,7 @@ def send_webpush_alert(titulo, mensagem):
                 webpush(
                     subscription_info=sub,
                     data=payload,
-                    vapid_private_key=vapid_private_path,
+                    vapid_private_key=vapid_private_key,
                     vapid_claims=claims
                 )
                 valid_subs.append(sub)
