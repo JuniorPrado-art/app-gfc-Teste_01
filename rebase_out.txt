@@ -1,0 +1,20 @@
+From https://github.com/JuniorPrado-art/app-gfc-Template2
+ * branch            main       -> FETCH_HEAD
+warning: unable to rmdir 'app-gfc-Template2-temp': Directory not empty
+Rebasing (1/7)
+Rebasing (2/7)
+Auto-merging execution/app.py
+CONFLICT (content): Merge conflict in execution/app.py
+Auto-merging frontend/src/app/dashboard/layout.tsx
+CONFLICT (content): Merge conflict in frontend/src/app/dashboard/layout.tsx
+Auto-merging frontend/src/app/dashboard/transacoes-duplicadas/page.tsx
+CONFLICT (add/add): Merge conflict in frontend/src/app/dashboard/transacoes-duplicadas/page.tsx
+Auto-merging frontend/src/app/dashboard/transacoes-pos/page.tsx
+CONFLICT (add/add): Merge conflict in frontend/src/app/dashboard/transacoes-pos/page.tsx
+error: could not apply 122d596... feat: Adiciona relat├│rios Transa├º├Áes POS e Transa├º├Áes Duplicadas
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+hint: Disable this message with "git config set advice.mergeConflict false"
+Could not apply 122d596... # feat: Adiciona relat├│rios Transa├º├Áes POS e Transa├º├Áes Duplicadas

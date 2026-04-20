@@ -24,5 +24,13 @@
             "email": "milton.ferreira@franqueadolinx.com.br",
             "password": "scrypt:32768:8:1$Kt4JY0X0rrYLoi3f$c3aed117ba866b48a613328cab8ca7d0a145be6dc2743beff9f5ac9cc1ac577848e4503eda86c21b6dbac534d50312d1891c535566f132d587824cbbd897910f"
         }
-    ]
+    ],
+    "telegram_config": {
+        "token": "8494604037:AAG9sGd9ggOy9-YQ_AHEQ8PGBrwZs3-UW18",
+        "chat_id": "822434279"
+    },
+    "vapid_keys": {
+        "private_key_path": "vapid_private.pem",
+        "public_key_b64": "BLx2Q34BHKOqc6Fpq8_bd44qaOSIHZWTedEoCjPLr9us18yPeX-TtsydZos0p6TQC3ANOKK6Jyi-Ydo-RTFR2HA"
+    }
 }

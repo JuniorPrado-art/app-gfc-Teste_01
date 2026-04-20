@@ -1,0 +1,19 @@
+## main...origin/main
+ M git_status.txt
+?? MIlton_INFs/implementation_plan_10.md
+?? git_diff.txt
+?? git_diff_staged.txt
+?? git_log.txt
+?? git_log_origin.txt
+?? git_log_template.txt
+?? git_status2.txt
+?? git_status_sb.txt
+?? log.txt
+?? push_orig_out.txt
+?? push_origin_out.txt
+?? push_template_out.txt
+?? push_tmpl_out.txt
+?? rebase_out.txt
+?? remote.txt
+?? stash_pop.txt
+?? status.txt

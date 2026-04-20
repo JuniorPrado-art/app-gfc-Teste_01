@@ -16,6 +16,7 @@ import base64
 import secrets
 import string
 from werkzeug.security import generate_password_hash, check_password_hash
+from pywebpush import webpush, WebPushException
 
 ALERT_STATE_FILE = 'alert_state.json'
 
@@ -210,7 +211,16 @@ def auth_reset_password():
             server.starttls()
             server.login(remetente, senha)
             
+        
+        if tipo == 'prevendas':
+            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(pendentes)} pré-venda(s) precisando de atenção!")
+            send_webpush_alert("Alerta de Pré-Vendas", f"Existem {len(pendentes)} pré-vendas pendentes.")
+        elif tipo == 'sincronia':
+            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(atrasados)} posto(s) atrasado(s) na sincronia!")
+            send_webpush_alert("Alerta de Sincronia", f"Existem {len(atrasados)} postos atrasados.")
+            
         server.send_message(msg)
+    
         server.quit()
 
         # Ocultamos a maior parte do email na resposta
@@ -317,6 +327,7 @@ def sync_file_to_github(filename):
         print(f"Erro no GitHub Sync de {filename}: {e}")
 
 VISIBILITY_FILE = 'visibility.json'
+SUBSCRIPTIONS_FILE = 'subscriptions.json'
 
 @app.route('/api/config/visibility', methods=['GET'])
 def get_visibility():
@@ -415,6 +426,45 @@ def get_alertas_config():
         with open(ALERTAS_CONFIG_FILE, 'r', encoding='utf-8') as f:
             return jsonify({"status": "success", "data": json.load(f)})
     return jsonify({"status": "success", "data": {}})
+
+
+@app.route('/api/notifications/vapidPublicKey', methods=['GET'])
+def get_vapid_public_key():
+    config_file = 'users_config.json'
+    if os.path.exists(config_file):
+        with open(config_file, 'r', encoding='utf-8') as f:
+            cfg = json.load(f)
+            if 'vapid_keys' in cfg and 'public_key_b64' in cfg['vapid_keys']:
+                return jsonify({"status": "success", "publicKey": cfg['vapid_keys']['public_key_b64']})
+    return jsonify({"status": "error", "message": "VAPID key not configured"}), 500
+
+@app.route('/api/notifications/subscribe', methods=['POST'])
+def subscribe_notification():
+    subscription = request.json
+    if not subscription:
+        return jsonify({"status": "error", "message": "Dados inválidos."}), 400
+        
+    subs = []
+    if os.path.exists(SUBSCRIPTIONS_FILE):
+        try:
+            with open(SUBSCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
+                subs = json.load(f)
+        except:
+            pass
+            
+    exists = False
+    for s in subs:
+        if s.get('endpoint') == subscription.get('endpoint'):
+            exists = True
+            break
+            
+    if not exists:
+        subs.append(subscription)
+        with open(SUBSCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(subs, f, indent=4)
+        sync_file_to_github(SUBSCRIPTIONS_FILE)
+        
+    return jsonify({"status": "success", "message": "Inscrição realizada."})
 
 @app.route('/api/config/alertas', methods=['POST'])
 def save_alertas_config():
@@ -530,10 +580,74 @@ def get_sincronia():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+def send_telegram_alert(mensagem):
+    config_file = 'users_config.json'
+    if not os.path.exists(config_file):
+        return
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            cfg = json.load(f)
+        if 'telegram_config' in cfg:
+            token = cfg['telegram_config'].get('token')
+            chat_id = cfg['telegram_config'].get('chat_id')
+            if token and chat_id:
+                url = f"https://api.telegram.org/bot{token}/sendMessage"
+                payload = {"chat_id": chat_id, "text": mensagem}
+                requests.post(url, json=payload, timeout=5)
+    except Exception as e:
+        print("Erro Telegram:", e)
+
+def send_webpush_alert(titulo, mensagem):
+    config_file = 'users_config.json'
+    if not os.path.exists(config_file) or not os.path.exists(SUBSCRIPTIONS_FILE):
+        return
+        
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            cfg = json.load(f)
+        vapid_private_path = cfg.get('vapid_keys', {}).get('private_key_path')
+        if not vapid_private_path or not os.path.exists(vapid_private_path):
+            return
+            
+        with open(SUBSCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
+            subs = json.load(f)
+            
+        claims = {"sub": "mailto:admin@appgfc.com.br"}
+        payload = json.dumps({"title": titulo, "body": mensagem})
+        
+        valid_subs = []
+        changed = False
+        for sub in subs:
+            try:
+                webpush(
+                    subscription_info=sub,
+                    data=payload,
+                    vapid_private_key=vapid_private_path,
+                    vapid_claims=claims
+                )
+                valid_subs.append(sub)
+            except WebPushException as ex:
+                if ex.response and ex.response.status_code in [404, 410]:
+                    changed = True
+                else:
+                    valid_subs.append(sub)
+                    print("Erro Push:", ex)
+            except Exception as e:
+                valid_subs.append(sub)
+                    
+        if changed:
+            with open(SUBSCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(valid_subs, f, indent=4)
+            sync_file_to_github(SUBSCRIPTIONS_FILE)
+            
+    except Exception as e:
+        print("Erro WebPush Geral:", e)
+
 def executar_disparo_alerta(tipo, force_send=False):
     # 1. Checa as configurações do E-mail e dos Destinatários
     if not os.path.exists(EMAIL_CONFIG_FILE) or not os.path.exists(ALERTAS_CONFIG_FILE):
-        return False, "E-mails ou Servidor SMTP não configurados."
+        return False, "E-mails ou Servidor SMTP não configurados.", False
         
     with open(EMAIL_CONFIG_FILE, 'r', encoding='utf-8') as f:
         smtp_cfg = json.load(f)
@@ -547,13 +661,13 @@ def executar_disparo_alerta(tipo, force_send=False):
     
     destinatarios_str = alerta_cfg.get('emails', '')
     if not remetente or not senha or not host or not destinatarios_str:
-        return False, "Configurações de E-mail incompletas."
+        return False, "Configurações de E-mail incompletas.", False
 
     destinatarios_str = destinatarios_str.replace(',', ';')
     destinatarios = [e.strip() for e in destinatarios_str.split(';') if e.strip()]
     
     if len(destinatarios) == 0:
-        return False, "E-mails destinatários formatados incorretamente ou em branco."
+        return False, "E-mails destinatários formatados incorretamente ou em branco.", False
     
     try:
         if tipo == 'prevendas':
@@ -589,7 +703,7 @@ def executar_disparo_alerta(tipo, force_send=False):
             conn.close()
 
             if len(pendentes) == 0 and not force_send:
-                return True, "Nenhuma pendência, e-mail não enviado."
+                return True, "Nenhuma pendência, e-mail não enviado.", False
 
             assunto = "[Agente GFC] Alerta de Pré-vendas Pendentes"
             
@@ -680,7 +794,7 @@ def executar_disparo_alerta(tipo, force_send=False):
             atrasados = [item for item in data_res if item.get('is_delayed')]
 
             if len(atrasados) == 0 and not force_send:
-                return True, "Nenhuma pendência, e-mail não enviado."
+                return True, "Nenhuma pendência, e-mail não enviado.", False
 
             assunto = "[Agente GFC] Alerta de Atraso na Sincronia de Filiais"
             
@@ -735,7 +849,7 @@ def executar_disparo_alerta(tipo, force_send=False):
             </div>
             '''
         else:
-            return False, "Tipo de monitoramento não reconhecido."
+            return False, "Tipo de monitoramento não reconhecido.", False
 
         msg = MIMEMultipart()
         msg['From'] = email.utils.formataddr(('Comercial Informática App', remetente))
@@ -752,22 +866,32 @@ def executar_disparo_alerta(tipo, force_send=False):
             server.starttls()
             server.login(remetente, senha)
             
+        
+        if tipo == 'prevendas':
+            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(pendentes)} pré-venda(s) precisando de atenção!")
+            send_webpush_alert("Alerta de Pré-Vendas", f"Existem {len(pendentes)} pré-vendas pendentes.")
+        elif tipo == 'sincronia':
+            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(atrasados)} posto(s) atrasado(s) na sincronia!")
+            send_webpush_alert("Alerta de Sincronia", f"Existem {len(atrasados)} postos atrasados.")
+            
         server.send_message(msg)
+    
         server.quit()
         
-        return True, f"Alerta enviado para {len(destinatarios)} destinatário(s)!"
+        return True, f"Alerta enviado para {len(destinatarios)} destinatário(s)!", True
         
     except smtplib.SMTPAuthenticationError:
         print("Erro Crítico de Envio SMTP: Autenticação falhou. Usuário ou senha incorretos/bloqueados.")
-        return False, "Erro de Autenticação no SMTP (Verifique a Senha de Aplicativo ou liberação do provedor)."
+        return False, "Erro de Autenticação no SMTP (Verifique a Senha de Aplicativo ou liberação do provedor).", False
     except Exception as e:
         print(f"Erro Crítico de Envio SMTP GERAL: {str(e)}")
-        return False, f"Erro ao processar disparo de e-mail: {str(e)}"
+        return False, f"Erro ao processar disparo de e-mail: {str(e)}", False
 
 class AlertManager:
     def __init__(self):
         self.state = {"prevendas": False, "sincronia": False}
         self.threads = {"prevendas": None, "sincronia": None}
+        self.failing_state = {"prevendas": False, "sincronia": False}
         self.load_state()
 
     def load_state(self):
@@ -829,7 +953,17 @@ class AlertManager:
         while self._is_active(tipo):
             try:
                 # Com is_background, processa e-mail apenas se pendentes > 0.
-                executar_disparo_alerta(tipo, force_send=False)
+                sucesso, msg, has_errors = executar_disparo_alerta(tipo, force_send=False)
+                
+                was_failing = self.failing_state.get(tipo, False)
+                if has_errors:
+                    self.failing_state[tipo] = True
+                elif was_failing and not has_errors:
+                    self.failing_state[tipo] = False
+                    # DISPARAR ALERTA DE ERRO SANADO!
+                    nome_tipo = "Pré-vendas" if tipo == 'prevendas' else "Sincronia"
+                    send_telegram_alert(f"✅ [ERRO SANADO] O problema de {nome_tipo} foi resolvido!")
+                    send_webpush_alert("Erro Sanado", f"O problema de {nome_tipo} foi resolvido!")
             except Exception as e:
                 print(f"Erro na thread de monitoramento ({tipo}): {e}")
             
@@ -846,7 +980,7 @@ alert_manager = AlertManager()
 def disparar_alerta():
     data = request.json
     tipo = data.get('tipo', '')
-    sucesso, msg = executar_disparo_alerta(tipo, force_send=True)
+    sucesso, msg, _ = executar_disparo_alerta(tipo, force_send=True)
     if sucesso:
         return jsonify({"status": "success", "message": msg})
     else:
@@ -888,7 +1022,7 @@ def toggle_rotina():
                 return jsonify({"status": "error", "message": "O remetente do GFC (E-mail, Senha ou Host) não foi configurado corretamente na aba de 'Conf. Email Aplicativo'."}), 400
 
             # Realiza um teste imadiato disparando o email
-            sucesso, msg = executar_disparo_alerta(tipo, force_send=True)
+            sucesso, msg, _ = executar_disparo_alerta(tipo, force_send=True)
             if not sucesso:
                 return jsonify({"status": "error", "message": f"Falha no envio do alerta de teste: {msg}"}), 400
 

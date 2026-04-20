@@ -1,0 +1,4 @@
+origin	https://github.com/JuniorPrado-art/app-gfc-Teste_01.git (fetch)
+origin	https://github.com/JuniorPrado-art/app-gfc-Teste_01.git (push)
+template	https://github.com/JuniorPrado-art/app-gfc-Template2.git (fetch)
+template	https://github.com/JuniorPrado-art/app-gfc-Template2.git (push)

@@ -1,0 +1,6 @@
+error: could not write index
+execution/app.py: needs merge
+frontend/src/app/dashboard/layout.tsx: needs merge
+frontend/src/app/dashboard/transacoes-duplicadas/page.tsx: needs merge
+frontend/src/app/dashboard/transacoes-pos/page.tsx: needs merge
+The stash entry is kept in case you need it again.

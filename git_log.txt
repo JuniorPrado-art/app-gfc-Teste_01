@@ -1,0 +1,29 @@
+commit f314755aeea8dae692e6fea4aed6e0b7bd286c75
+Author: Milton Junior <juniormax25@gmail.com>
+Date:   Mon Apr 6 12:19:30 2026 -0400
+
+    feat(ui): Diferencia mensagem de erro real de pesquisa sem resultados nos dois relatorios
+
+commit c6aa886fb1c1a5c04960196090c5cf75e733af3d
+Author: Milton Junior <juniormax25@gmail.com>
+Date:   Mon Apr 6 12:02:18 2026 -0400
+
+    fix(revert): Retorna design original de tabela mas sincroniza as 13 colunas de dados exatos do banco de dados ao invés do visual de terminal
+
+commit 17a7d5ea39fe4a84a83acb1a641afb250d4ce3d5
+Author: Milton Junior <juniormax25@gmail.com>
+Date:   Mon Apr 6 11:53:34 2026 -0400
+
+    fix(ui): Ajustes de layout da sidebar, tratamento de retorno vazio e tabela em formato ASCII
+
+commit 122d596172b5100db72f354c3b44afae1a559b8f
+Author: Milton Junior <juniormax25@gmail.com>
+Date:   Mon Apr 6 10:55:32 2026 -0400
+
+    feat: Adiciona relatórios Transações POS e Transações Duplicadas
+
+commit 46ce53a601ebef94cdb8639ca2df827e45722345
+Author: Milton Junior <juniormax25@gmail.com>
+Date:   Mon Apr 6 10:35:08 2026 -0400
+
+    Sincronização de regras de visibilidade de ferramentas para o Dashboard

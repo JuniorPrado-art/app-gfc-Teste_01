@@ -1,0 +1,28 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   git_status.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	MIlton_INFs/implementation_plan_10.md
+	git_diff.txt
+	git_diff_staged.txt
+	git_log.txt
+	git_log_origin.txt
+	git_log_template.txt
+	git_status2.txt
+	log.txt
+	push_orig_out.txt
+	push_origin_out.txt
+	push_template_out.txt
+	push_tmpl_out.txt
+	rebase_out.txt
+	remote.txt
+	stash_pop.txt
+	status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

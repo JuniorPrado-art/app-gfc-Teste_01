@@ -5,6 +5,22 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import pkg from '../../../package.json';
 
+
+function urlB64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -14,6 +30,7 @@ export default function DashboardLayout({
   const [role, setRole] = useState<string>('');
   const [user, setUser] = useState<string>('');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+  const [pushPermission, setPushPermission] = useState<string>('default');
 
   useEffect(() => {
     // Carrega a permissão (Admin ou Client) e envia pro login se logoff
@@ -30,7 +47,49 @@ export default function DashboardLayout({
       .then(r => r.json())
       .then(data => setVisibility(data))
       .catch(e => console.error("Erro carregando permissões: ", e));
+
+    // Push notifications setup
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      setPushPermission(Notification.permission);
+      navigator.serviceWorker.register('/sw.js').then(swReg => {
+        if (Notification.permission === 'granted') {
+          subscribeUserToPush(swReg);
+        }
+      }).catch(console.error);
+    }
+
   }, []);
+
+  
+  const subscribeUserToPush = async (swRegistration?: ServiceWorkerRegistration) => {
+    try {
+      const reg = swRegistration || await navigator.serviceWorker.ready;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/vapidPublicKey`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        const applicationServerKey = urlB64ToUint8Array(data.publicKey);
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        });
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+      }
+    } catch (err) {
+      console.error('Failed to subscribe: ', err);
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    const permission = await Notification.requestPermission();
+    setPushPermission(permission);
+    if (permission === 'granted') {
+      subscribeUserToPush();
+    }
+  };
 
   const isActive = (path: string) => pathname?.includes(path) ? 'active' : '';
 
@@ -156,6 +215,18 @@ export default function DashboardLayout({
             </div>
           )}
         </nav>
+
+        
+        {pushPermission === 'default' && (
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <button 
+              onClick={requestNotificationPermission}
+              style={{ background: '#3b82f6', border: 'none', borderRadius: '4px', padding: '6px 12px', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              🔔 Ativar Notificações
+            </button>
+          </div>
+        )}
 
         <div style={{ marginTop: 'auto', padding: '12px 12px 0 12px', textAlign: 'center', color: '#cbd5e1', fontSize: '12px', fontWeight: 600 }}>
           Olá, {user}
