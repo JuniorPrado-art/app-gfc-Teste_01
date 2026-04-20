@@ -226,8 +226,7 @@ export default function PreVendasPage() {
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
           </div>
-          <p style={{ fontSize: '18px' }}>Nenhuma Pré-venda pendente ou atrasada no momento!</p>
-          <p style={{ fontSize: '14px', marginTop: '8px' }}>Todos os postos estão com a sincronia em dia.</p>
+          <p style={{ fontSize: '18px' }}>Nenhuma Pré-Venda que necessite atenção no momento.</p>
         </div>
       )}
 
