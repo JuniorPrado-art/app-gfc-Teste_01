@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 
 export default function DashboardIndex() {
   const [config, setConfig] = useState<any>(null);
-  const [sincroniaCount, setSincroniaCount] = useState<number | null>(null);
-  const [prevendasCount, setPrevendasCount] = useState<number | null>(null);
+  const [sincroniaCount, setSincroniaCount] = useState<number | null | 'timeout'>(null);
+  const [prevendasCount, setPrevendasCount] = useState<number | null | 'timeout'>(null);
   const [role, setRole] = useState<string>('');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
 
@@ -29,25 +29,52 @@ export default function DashboardIndex() {
       .catch(err => console.error("Erro ao carregar dados locais"));
       
     // Busca os dados da Sincronia para exibir no card da Visão Geral
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success' && data.data) {
-          const atrasados = data.data.filter((item: any) => item.is_delayed).length;
-          setSincroniaCount(atrasados);
-        }
-      })
-      .catch(err => console.error("Erro ao carregar status da sincronia"));
+    const fetchSincronia = () => {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia`)
+        .then(async res => {
+          if (res.status === 504) {
+            setSincroniaCount('timeout');
+            setTimeout(fetchSincronia, 15000); // Tenta de novo em 15s
+            return null;
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.status === 'success' && data.data) {
+            const atrasados = data.data.filter((item: any) => item.is_delayed).length;
+            setSincroniaCount(atrasados);
+          } else if (data && data.status === 'timeout') {
+            setSincroniaCount('timeout');
+            setTimeout(fetchSincronia, 15000);
+          }
+        })
+        .catch(err => console.error("Erro ao carregar status da sincronia"));
+    };
 
     // Busca os dados das Pré-vendas Pendentes
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/prevendas`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success' && data.data) {
-          setPrevendasCount(data.data.length);
-        }
-      })
-      .catch(err => console.error("Erro ao carregar status das pré-vendas"));
+    const fetchPrevendas = () => {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/prevendas`)
+        .then(async res => {
+          if (res.status === 504) {
+            setPrevendasCount('timeout');
+            setTimeout(fetchPrevendas, 15000); // Tenta de novo em 15s
+            return null;
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.status === 'success' && data.data) {
+            setPrevendasCount(data.data.length);
+          } else if (data && data.status === 'timeout') {
+            setPrevendasCount('timeout');
+            setTimeout(fetchPrevendas, 15000);
+          }
+        })
+        .catch(err => console.error("Erro ao carregar status das pré-vendas"));
+    };
+
+    fetchSincronia();
+    fetchPrevendas();
   }, []);
 
   const isVisible = (key: string) => {
@@ -77,6 +104,8 @@ export default function DashboardIndex() {
             <div className="stat-label">Sincronia</div>
             {sincroniaCount === null ? (
                <div className="stat-value" style={{ color: '#94a3b8', fontSize: '20px' }}>Carregando...</div>
+            ) : sincroniaCount === 'timeout' ? (
+               <div className="stat-value" style={{ color: '#fbbf24', fontSize: '13px', lineHeight: '1.4', marginTop: '4px' }}>Conexão lenta. Aguarde um momento...</div>
             ) : sincroniaCount > 0 ? (
                <div className="stat-value" style={{ color: '#ef4444', fontSize: '20px' }}>{sincroniaCount} Posto{sincroniaCount > 1 ? 's' : ''} Atrasado{sincroniaCount > 1 ? 's' : ''}</div>
             ) : (
@@ -89,6 +118,8 @@ export default function DashboardIndex() {
             <div className="stat-label">Pré-vendas</div>
             {prevendasCount === null ? (
                <div className="stat-value" style={{ color: '#94a3b8', fontSize: '20px' }}>Carregando...</div>
+            ) : prevendasCount === 'timeout' ? (
+               <div className="stat-value" style={{ color: '#fbbf24', fontSize: '13px', lineHeight: '1.4', marginTop: '4px' }}>Conexão lenta. Aguarde um momento...</div>
             ) : prevendasCount > 0 ? (
                <div className="stat-value" style={{ color: '#ef4444', fontSize: '20px' }}>{prevendasCount} Pendente{prevendasCount > 1 ? 's' : ''}</div>
             ) : (

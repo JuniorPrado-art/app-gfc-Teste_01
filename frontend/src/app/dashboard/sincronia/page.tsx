@@ -23,10 +23,21 @@ export default function SincroniaPage() {
     async function fetchData() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia`);
+        if (res.status === 504) {
+          setError('Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal. Tentando novamente...');
+          setTimeout(fetchData, 15000); // Tenta novamente
+          return;
+        }
+
         const json = await res.json();
         
         if (res.ok && json.status === 'success') {
           setRecords(json.data || []);
+          setError(null);
+        } else if (json.status === 'timeout') {
+          setError('Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal. Tentando novamente...');
+          setTimeout(fetchData, 15000);
+          return;
         } else {
           setError(json.message || 'Erro ao carregar os dados.');
         }

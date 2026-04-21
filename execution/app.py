@@ -484,7 +484,8 @@ def get_prevendas():
             port=config.get('port', 5432),
             database=config['database'],
             user=config['user'],
-            password=config['password']
+            password=config['password'],
+            connect_timeout=10
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -517,6 +518,9 @@ def get_prevendas():
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
+        error_msg = str(e).lower()
+        if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
+            return jsonify({"status": "timeout", "message": "Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal."}), 504
         return jsonify({"status": "error", "message": "Erro de consulta SQL no Banco: " + str(e)}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -533,7 +537,8 @@ def get_sincronia():
             port=config.get('port', 5432),
             database=config['database'],
             user=config['user'],
-            password=config['password']
+            password=config['password'],
+            connect_timeout=10
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -573,6 +578,9 @@ def get_sincronia():
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
+        error_msg = str(e).lower()
+        if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
+            return jsonify({"status": "timeout", "message": "Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal."}), 504
         return jsonify({"status": "error", "message": "Erro de consulta SQL no Banco: " + str(e)}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
