@@ -16,14 +16,6 @@
         }
     },
     {
-        "endpoint": "https://fcm.googleapis.com/fcm/send/e7JpgtZMg0c:APA91bF0ZVXyfINZ96B1fhQGeZj8HjZYUOvwlap21qK8j56rd_NUivyOfN932L4ZpigUGlTZ-_OSW3jQbSOVqiLzhjIx1kyllVYecur2QPCJFEOq3DeGxa_913MebPj3dv000THMBAt6",
-        "expirationTime": null,
-        "keys": {
-            "p256dh": "BAAJWSeX8eGQzaITolqW7Ne3PJr-s5OAvD5noMkFu94kpcXZTBLmQxjn5AOGRie_PzqthSVrxXswlBkphxC0LsE",
-            "auth": "tQPOXQotGxJCHhvEqSZbPg"
-        }
-    },
-    {
         "endpoint": "https://fcm.googleapis.com/fcm/send/dN-PS24VrW8:APA91bG5xaKSQKVZqFMGNRTm1ig7QKh8-n7-5X7F8fWEwkDHBzyakSsNDTzb2TuB64ScomP10c_XZV7MHAwN3QwN_stARNMEF-1FObeHKcx_D72Ww276md2Lhzhu47fRS8iK7ZZ9IR4G",
         "expirationTime": null,
         "keys": {
