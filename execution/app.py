@@ -95,8 +95,8 @@ def auth_login():
         return jsonify({"status": "error", "message": "Usuário e senha são obrigatórios."}), 400
 
     # 1. Checa conta Admin Local
-    ADMIN_USER_HASH = "scrypt:32768:8:1$PCGOicMMQocF5fk1$03f8eb5f33774b94a5b64961a0cac772c0ef9276bd90c076cefdf733cd21fd801f0c739296ccb92cdddfd6f13b89d467b6aa3535ed3ead9897ca07a251646edc"
-    ADMIN_PASS_HASH = "scrypt:32768:8:1$rMwYj5bhifNWA0HF$38a54c8415738c6d3e0f63243493fdad76abd4b9d041d867d9b1b2a55f2a1d8769bc3d87c4453f078465380eba08aee1549483a48d15d9a7c1e836f28b539ce9"
+    ADMIN_USER_HASH = "pbkdf2:sha256:1000000$8X2xYuIIdqSf8Su5$4564cc805e9fe3d0713a6913dd454adf7812e91d518fb00d95499defae0b3e44"
+    ADMIN_PASS_HASH = "pbkdf2:sha256:1000000$aC1UI04vySEktWdC$9ba9c11d4e7c82461450f5a6fc87ca3ada7f67dc07112db433e7124df2af4ce5"
 
     if check_password_hash(ADMIN_USER_HASH, username) and check_password_hash(ADMIN_PASS_HASH, password):
         return jsonify({"status": "success", "role": "admin", "message": "Login Administrador bem-sucedido."})
@@ -244,7 +244,7 @@ def auth_change_password():
         return jsonify({"status": "error", "message": "Todos os campos são obrigatórios."}), 400
 
     # 1. Tentar alterar para o Admin Local primeiro
-    ADMIN_USER_HASH = "scrypt:32768:8:1$PCGOicMMQocF5fk1$03f8eb5f33774b94a5b64961a0cac772c0ef9276bd90c076cefdf733cd21fd801f0c739296ccb92cdddfd6f13b89d467b6aa3535ed3ead9897ca07a251646edc"
+    ADMIN_USER_HASH = "pbkdf2:sha256:1000000$8X2xYuIIdqSf8Su5$4564cc805e9fe3d0713a6913dd454adf7812e91d518fb00d95499defae0b3e44"
     ADMIN_PASS_HASH = "scrypt:32768:8:1$rMwYj5bhifNWA0HF$38a54c8415738c6d3e0f63243493fdad76abd4b9d041d867d9b1b2a55f2a1d8769bc3d87c4453f078465380eba08aee1549483a48d15d9a7c1e836f28b539ce9"
 
     if check_password_hash(ADMIN_USER_HASH, username):
