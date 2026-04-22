@@ -24,11 +24,11 @@
         }
     },
     {
-        "endpoint": "https://fcm.googleapis.com/fcm/send/eschwk6S3q8:APA91bGPQqdnJ0oWDAk7EL7J8PZ_wHv3Nx8IKyLNwse1U7qx9Kthgf6VtOo3fShEaApyP2Yw7YQIEfhTFezyjugTKe_wyEzVRCAf0hBaPuQH06abXJ8nVem8_lWVSh-gSaljuF28Hcbo",
+        "endpoint": "https://fcm.googleapis.com/fcm/send/dooal0MV_F0:APA91bFmRVytcD-0LfV-PyhRp4QYa02y_8p23e8MdPFJX8MQIhUSVoktIhIlVPhckwy8THFi-QBM4Yo8Hfx-K17EoYwTBXJ3Ft03QDP4IY3GAfVno2rncJkgJ-anEGr1ErHvRAOReZG1",
         "expirationTime": null,
         "keys": {
-            "p256dh": "BDxBr9Y6Qeq4KMSttyHUcTDBUB_7QcLTaPseT07mzzGHXvsRhe-CEp1ESBT8PuNFcuTbCS5fYz_TuJieZ8uEFCo",
-            "auth": "a2Pq-N97G4FLhAAJgQSb0g"
+            "p256dh": "BDPt31feY3MFO8T_z66m4PfR5pGWUauvW3wsnXfcLgftNJ8Zmyu7Og2-FfeG_LprLeqoKX6t88mHd3OJmUYChU4",
+            "auth": "BxaOWuPz5aRaBd5d_SX1Sg"
         }
     }
 ]
