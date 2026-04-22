@@ -622,7 +622,8 @@ def send_webpush_alert(titulo, mensagem):
                     subscription_info=sub,
                     data=payload,
                     vapid_private_key=vapid_private_key,
-                    vapid_claims=claims
+                    vapid_claims=claims,
+                    ttl=86400
                 )
                 valid_subs.append(sub)
             except WebPushException as ex:

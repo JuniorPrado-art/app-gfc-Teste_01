@@ -6,6 +6,7 @@ self.addEventListener('push', function(event) {
       icon: '/logo.png',
       badge: '/logo.png',
       vibrate: [100, 50, 100],
+      requireInteraction: true,
       data: {
         dateOfArrival: Date.now(),
         primaryKey: '2'
