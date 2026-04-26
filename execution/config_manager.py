@@ -5,7 +5,10 @@ CLIENTES_CONFIG_FILE = 'clientes_config.json'
 
 def load_client_config(alias):
     """
-    Lê as configurações do cliente específico a partir do arquivo clientes_config.json
+    Lê as configurações do cliente específico a partir do arquivo central de clientes (clientes_config.json).
+    
+    Esta função mapeia os campos nativos do JSON (ex: DB_HOST, TELEGRAM_BOT_TOKEN) para os nomes
+    internos utilizados pelas rotas e pelo Motor de Alerta do GFC (ex: host, TELEGRAM_BOT_TOKEN).
     """
     if not os.path.exists(CLIENTES_CONFIG_FILE):
         return None
@@ -35,7 +38,10 @@ def load_client_config(alias):
     return None
 
 def get_all_clients():
-    """Retorna a lista completa de clientes configurados."""
+    """
+    Retorna a lista completa de clientes configurados.
+    Útil para exibir na interface de Configurações Administrativas do GFC.
+    """
     if not os.path.exists(CLIENTES_CONFIG_FILE):
         return []
     try:
@@ -44,4 +50,3 @@ def get_all_clients():
             return data.get('clientes', [])
     except:
         return []
-

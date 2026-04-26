@@ -13,12 +13,14 @@ export default function DashboardIndex() {
     const storedRole = localStorage.getItem('gfc_role');
     if (storedRole) setRole(storedRole);
 
+    // Verifica as permissões de visibilidade das telas configuradas no Admin
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/visibility`)
       .then(r => r.json())
       .then(data => setVisibility(data))
       .catch(e => console.error("Erro carregando permissões: ", e));
 
-    // Busca algumas informações para popular a tela e ficar amigável
+    // [DESATIVADO] Busca de configurações globais. 
+    // Mantido apenas para não quebrar referências antigas no HTML.
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/load`)
       .then(res => res.json())
       .then(data => {
@@ -28,7 +30,10 @@ export default function DashboardIndex() {
       })
       .catch(err => console.error("Erro ao carregar dados locais"));
       
-    // Busca os dados da Sincronia para exibir no card da Visão Geral
+    // Monitoramento da Sincronia:
+    // Realiza um polling (requisição recorrente) a cada 15 segundos caso o servidor backend
+    // retorne 504 (timeout) devido a conexões lentas do banco de dados do cliente.
+    // O objetivo é evitar que a tela fique em branco e tentar automaticamente a conexão.
     const fetchSincronia = () => {
       const cliente = localStorage.getItem('gfc_cliente') || '';
       fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia?cliente=${cliente}`)
@@ -52,7 +57,8 @@ export default function DashboardIndex() {
         .catch(err => console.error("Erro ao carregar status da sincronia"));
     };
 
-    // Busca os dados das Pré-vendas Pendentes
+    // Monitoramento de Pré-Vendas Pendentes:
+    // Segue o mesmo padrão de polling de 15 segundos da Sincronia.
     const fetchPrevendas = () => {
       const cliente = localStorage.getItem('gfc_cliente') || '';
       fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/prevendas?cliente=${cliente}`)

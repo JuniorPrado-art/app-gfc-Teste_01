@@ -20,6 +20,9 @@ export default function SincroniaPage() {
   const [rotinaAtiva, setRotinaAtiva] = useState(false);
 
   useEffect(() => {
+    // Busca inicial de dados:
+    // Conecta à rota /api/monitoramento/sincronia do backend e também 
+    // consulta se as "threads em background" (os alertas automáticos) estão ligadas.
     async function fetchData() {
       try {
         const cliente = localStorage.getItem('gfc_cliente') || '';
@@ -57,6 +60,9 @@ export default function SincroniaPage() {
     fetchData();
   }, []);
 
+  // Função executada quando o usuário clica em "Iniciar / Parar Alerta":
+  // Essa função sinaliza ao backend (através de /api/monitoramento/toggle-rotina) 
+  // que o robô de envio de emails e telegram deve ser ativado ou desativado.
   const handleToggleAlerta = async () => {
     setAlerting(true);
     setToast(null);

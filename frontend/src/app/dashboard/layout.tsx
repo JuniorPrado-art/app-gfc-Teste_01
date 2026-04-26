@@ -48,7 +48,9 @@ export default function DashboardLayout({
       .then(data => setVisibility(data))
       .catch(e => console.error("Erro carregando permissões: ", e));
 
-    // Push notifications setup
+    // Inicialização de Notificações WebPush (Apenas em navegadores compatíveis):
+    // 1. O código registra o 'Service Worker' (sw.js) que escuta as mensagens do servidor mesmo com a aba fechada.
+    // 2. Se a permissão já estiver concedida, inscreve o usuário no push usando a chave VAPID.
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       setPushPermission(Notification.permission);
       navigator.serviceWorker.register('/sw.js').then(swReg => {
@@ -61,6 +63,9 @@ export default function DashboardLayout({
   }, []);
 
   
+  // Função que inscreve o navegador do usuário no servidor para receber Push Notifications nativas.
+  // Ela busca a Chave Pública VAPID cadastrada para esse Cliente no servidor, gera uma inscrição
+  // criptografada e envia para a rota POST /api/notifications/subscribe.
   const subscribeUserToPush = async (swRegistration?: ServiceWorkerRegistration) => {
     try {
       const reg = swRegistration || await navigator.serviceWorker.ready;
@@ -80,7 +85,7 @@ export default function DashboardLayout({
         });
       }
     } catch (err) {
-      console.error('Failed to subscribe: ', err);
+      console.error('Falha ao se inscrever no WebPush: ', err);
     }
   };
 

@@ -25,6 +25,9 @@ export default function PreVendasPage() {
   const [rotinaAtiva, setRotinaAtiva] = useState(false);
 
   useEffect(() => {
+    // Busca inicial de dados:
+    // Conecta à rota /api/monitoramento/prevendas e também verifica
+    // o status da rotina em background.
     async function fetchData() {
       try {
         const cliente = localStorage.getItem('gfc_cliente') || '';
@@ -62,6 +65,8 @@ export default function PreVendasPage() {
     fetchData();
   }, []);
 
+  // Função para Iniciar / Parar Alerta:
+  // Controla o motor do backend que dispara os e-mails e mensagens no Telegram.
   const handleToggleAlerta = async () => {
     setAlerting(true);
     setToast(null);
@@ -86,7 +91,9 @@ export default function PreVendasPage() {
     }
   };
 
-  // Agrupar registros pela Empresa usando o código e nome
+  // Agrupamento Visual por Empresa:
+  // Como os dados vêm de várias filiais misturados no banco, o frontend agrupa 
+  // os registros de pré-vendas com base no código de cada posto/empresa.
   const groupedData = records.reduce((acc, curr) => {
     // A chave do grupo conterá o código da empresa e o nome fantasia dela
     const key = `${curr.empresa} - ${curr.nome_empresa || 'NOME INDISPONÍVEL'}`;

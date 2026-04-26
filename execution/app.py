@@ -60,35 +60,38 @@ def test_connection():
         return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 400
 
 
-@app.route('/api/config/save', methods=['POST'])
-def save_configuration():
-    """
-    Desabilitado. Configurações devem ser alteradas no painel do servidor Render.
-    """
-    return jsonify({
-        "status": "error", 
-        "message": "Configuração manual desabilitada. Utilize as Variáveis de Ambiente no painel (Render) para conectar um banco de dados."
-    }), 403
+# ====================================================================================================
+# ROTAS LEGADAS (DESATIVADAS)
+# Mantidas apenas para histórico. No modelo Multi-Tenant atual (1 repositório para vários clientes), 
+# as configurações não são salvas de forma global pelo painel legado, mas sim via Cadastro de Clientes.
+# ====================================================================================================
 
+# @app.route('/api/config/save', methods=['POST'])
+# def save_configuration():
+#     """
+#     [DESATIVADO] Configurações globais antigas.
+#     """
+#     return jsonify({
+#         "status": "error", 
+#         "message": "Configuração manual desabilitada. Utilize o Cadastro de Clientes."
+#     }), 403
 
-@app.route('/api/config/load', methods=['GET'])
-def get_configuration():
-    """
-    Descontinuado em Multi-Tenant.
-    """
-    return jsonify({"status": "error", "message": "Utilize o Cadastro de Clientes."}), 404
-        
-    # Nunca devolver a senha limpa na API via GET por segurança visual do painel,
-    # A não ser que seja um request exigindo descriptografia local pro admin. 
-    # Optamos por retonar um placeholder.
-    if 'password' in config:
-        config['password'] = "********"
-        
-    return jsonify({"status": "success", "data": config}), 200
+# @app.route('/api/config/load', methods=['GET'])
+# def get_configuration():
+#     """
+#     [DESATIVADO] Carregar configurações globais antigas.
+#     """
+#     return jsonify({"status": "error", "message": "Utilize o Cadastro de Clientes."}), 404
 
 
 @app.route('/api/auth/login', methods=['POST'])
 def auth_login():
+    """
+    Autenticação do Sistema.
+    Permite login para o Administrador Global (Admin Local em código) ou 
+    para Clientes (usuários finais cadastrados em users_config.json).
+    O token JWT não é utilizado aqui, o controle é feito via localStorage no Frontend.
+    """
     data = request.json
     username = data.get('username')
     password = data.get('password')
@@ -126,6 +129,11 @@ def auth_login():
 
 @app.route('/api/auth/reset-password', methods=['POST'])
 def auth_reset_password():
+    """
+    Recuperação de Senha.
+    Localiza o usuário pelo E-mail ou Nome de Usuário, gera uma senha temporária
+    segura e envia para o e-mail cadastrado usando as configurações SMTP da aplicação.
+    """
     data = request.json
     identifier = data.get('identifier')
     
@@ -212,14 +220,6 @@ def auth_reset_password():
             server = smtplib.SMTP(host, int(porta))
             server.starttls()
             server.login(remetente, senha)
-            
-        
-        if tipo == 'prevendas':
-            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(pendentes)} pré-venda(s) precisando de atenção!")
-            send_webpush_alert("Alerta de Pré-Vendas", f"Existem {len(pendentes)} pré-vendas pendentes.")
-        elif tipo == 'sincronia':
-            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(atrasados)} posto(s) atrasado(s) na sincronia!")
-            send_webpush_alert("Alerta de Sincronia", f"Existem {len(atrasados)} postos atrasados.")
             
         server.send_message(msg)
     
@@ -508,6 +508,13 @@ def save_clientes_config():
 
 @app.route('/api/monitoramento/prevendas', methods=['GET'])
 def get_prevendas():
+    """
+    Monitoramento de Pré-Vendas.
+    Recebe o 'cliente' via Query String, carrega suas configurações exclusivas
+    de banco de dados e executa uma consulta que busca orçamentos travados (status 'A', tipo 'S').
+    Considera pendente apenas as pré-vendas travadas há mais de 1 hora (3600 segundos).
+    Retorna JSON formatado para o painel de interface (Frontend).
+    """
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
@@ -564,6 +571,13 @@ def get_prevendas():
 
 @app.route('/api/monitoramento/sincronia', methods=['GET'])
 def get_sincronia():
+    """
+    Monitoramento de Sincronia de Postos.
+    Recebe o 'cliente' via Query String e verifica na tabela 'pgd_flow_sync'
+    o status da replicação de dados.
+    A lógica define que se a diferença de tempo (Último Avanço e Último Recebimento)
+    ultrapassar 30 minutos (1800 segundos), a loja é considerada "Atrasada" (is_delayed = True).
+    """
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
@@ -693,6 +707,18 @@ def send_webpush_alert(titulo, mensagem, cliente_alias):
         print("Erro WebPush Geral:", e)
 
 def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
+    """
+    Motor Central de Disparo de Alertas.
+    Executa de forma isolada uma verificação no banco de dados para buscar pendências de Pré-vendas
+    ou Sincronia e, caso existam, envia as notificações correspondentes aos canais configurados.
+    
+    Canais suportados: E-mail (SMTP), Telegram e Push Notification (WebPush).
+    
+    Args:
+        tipo (str): 'prevendas' ou 'sincronia'.
+        cliente_alias (str): O identificador único do cliente.
+        force_send (bool): Se True, envia o e-mail mesmo sem pendências reais (útil para teste de conexão).
+    """
     # 1. Checa as configurações do E-mail e dos Destinatários
     if not os.path.exists(EMAIL_CONFIG_FILE):
         return False, "E-mails ou Servidor SMTP não configurados.", False
@@ -938,6 +964,14 @@ def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
         return False, f"Erro ao processar disparo de e-mail: {str(e)}", False
 
 class AlertManager:
+    """
+    Gerenciador de Alertas em Background (Multi-Tenant).
+    Esta classe é responsável por gerenciar as threads (processos paralelos) que ficam ativas
+    no servidor monitorando continuamente o banco de dados de cada cliente.
+    
+    Ele mantem um estado persistente (`alert_state.json`) para que se o servidor reiniciar (Ex: no Render),
+    as threads sejam religadas automaticamente sem a necessidade de intervenção do usuário.
+    """
     def __init__(self):
         self.state = {}
         self.threads = {}
@@ -1106,195 +1140,204 @@ def toggle_rotina():
     
     return jsonify({"status": "error", "message": "Tipo de rotina indisponível."}), 400
 
-@app.route('/api/empresas', methods=['GET'])
-def get_empresas():
-    config = load_config()
-    if not config:
-        return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
-
-    try:
-        conn = psycopg2.connect(
-            host=config['host'],
-            port=config.get('port', 5432),
-            database=config['database'],
-            user=config['user'],
-            password=config['password'],
-            connect_timeout=20
-        )
-        conn.set_client_encoding('WIN1252')
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT grid as codigo, nome_reduzido as empresa FROM empresa ORDER BY nome_reduzido")
-        columns = [desc[0] for desc in cursor.description]
-        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-        cursor.close()
-        conn.close()
-
-        return jsonify({"status": "success", "data": results})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/relatorios/transacoes-pos', methods=['POST'])
-def get_transacoes_pos():
-    data = request.json
-    dt_periodo_ini = data.get('data_inicial')
-    dt_periodo_fim = data.get('data_final')
-    empresa = data.get('codigo_empresa')
-
-    if not all([dt_periodo_ini, dt_periodo_fim, empresa]):
-        return jsonify({"status": "error", "message": "Data inicial, data final e empresa são obrigatórios."}), 400
-
-    config = load_config()
-    if not config:
-        return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
-
-    try:
-        conn = psycopg2.connect(
-            host=config['host'], port=config.get('port', 5432),
-            database=config['database'], user=config['user'], password=config['password']
-        )
-        conn.set_client_encoding('WIN1252')
-        cursor = conn.cursor()
-        
-        query = """
-            SELECT
-              mm.conta_debitar as plano_conta,
-              mm.nome as forma_pagamento, 
-              m.data,
-              m.turno,
-              c.nome as conta_caixa,
-              m.valor, 
-              m.documento,
-              m.usuario,
-              nf.numero_nota,
-              e.nome_reduzido as empresa
-            FROM movto m
-            JOIN motivo_movto mm ON (mm.grid = m.motivo)
-            LEFT JOIN conta c ON (c.codigo=m.conta_creditar)
-            LEFT JOIN nota_fiscal nf ON (nf.mlid=m.mlid)
-            LEFT JOIN empresa e ON (e.grid=m.empresa)
-            WHERE mm.forma_pgto = 't'
-              AND mm.conta_debitar ILIKE '1.3.01%%'
-              AND NOT EXISTS (SELECT 1 FROM tef_transacao t WHERE t.movto = m.grid)
-              AND m.data BETWEEN %s AND %s
-              AND e.grid = %s
-            ORDER BY m.documento
-        """
-        cursor.execute(query, (dt_periodo_ini, dt_periodo_fim, empresa))
-        
-        columns = [desc[0] for desc in cursor.description]
-        results = []
-        for row in cursor.fetchall():
-            row_dict = dict(zip(columns, row))
-            for k, v in row_dict.items():
-                if isinstance(v, (datetime.datetime, datetime.date)):
-                    row_dict[k] = v.strftime("%Y-%m-%d %H:%M:%S")
-                elif hasattr(v, 'quantize') or type(v).__name__ == 'Decimal':
-                    row_dict[k] = float(v)
-            results.append(row_dict)
-            
-        cursor.close()
-        conn.close()
-
-        return jsonify({"status": "success", "data": results})
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Erro de banco: {str(e)}"}), 500
-
-@app.route('/api/relatorios/transacoes-duplicadas', methods=['POST'])
-def get_transacoes_duplicadas():
-    data = request.json
-    dt_periodo_ini = data.get('data_inicial')
-    dt_periodo_fim = data.get('data_final')
-    empresa = data.get('codigo_empresa')
-
-    if not all([dt_periodo_ini, dt_periodo_fim, empresa]):
-        return jsonify({"status": "error", "message": "Data inicial, data final e empresa são obrigatórios."}), 400
-
-    config = load_config()
-    if not config:
-        return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
-
-    try:
-        conn = psycopg2.connect(
-            host=config['host'], port=config.get('port', 5432),
-            database=config['database'], user=config['user'], password=config['password']
-        )
-        conn.set_client_encoding('WIN1252')
-        cursor = conn.cursor()
-        
-        query = """
-SELECT
-    mm.conta_debitar,
-    mm.nome AS nome_cartao,
-    m.data,
-    m.turno,
-    c.nome AS nome_caixa,
-    m.documento,
-    m.vencto,
-    nf.numero_nota,
-    nfts.nome AS status,
-    m.valor,
-    m.usuario,
-    e.nome_reduzido AS nome_empresa,
-    CASE 
-        WHEN tt.autorizacao IS NOT NULL THEN tt.autorizacao 
-        ELSE 'Sem Autorização TEF' 
-    END AS autorizacao_tef
-FROM movto m
-INNER JOIN motivo_movto AS mm ON m.motivo = mm.grid
-LEFT JOIN empresa AS e ON e.grid = m.empresa
-LEFT JOIN conta AS c ON m.conta_creditar = c.codigo
-LEFT JOIN tef_transacao AS tt ON m.grid = tt.movto
-LEFT JOIN nota_fiscal AS nf ON nf.mlid = m.mlid
-LEFT JOIN nota_fiscal_situacao AS nfs ON nf.grid = nfs.nota_fiscal
-LEFT JOIN nota_fiscal_tipo_situacao AS nfts ON nfs.situacao = nfts.codigo
-INNER JOIN (
-    SELECT
-        SPLIT_PART(sub_m.documento, '/', 1) AS documento_base,
-        sub_m.data
-    FROM movto sub_m
-    INNER JOIN motivo_movto sub_mm ON sub_m.motivo = sub_mm.grid
-    LEFT JOIN empresa e2 ON e2.grid = sub_m.empresa
-    WHERE sub_m.data BETWEEN %s AND %s
-      AND sub_mm.forma_pgto = 't'
-      AND sub_mm.conta_debitar ILIKE '1.3.01%%'
-      AND sub_mm.nome NOT LIKE '%%PARCELADO%%'
-      AND e2.grid = %s
-    GROUP BY SPLIT_PART(sub_m.documento, '/', 1), sub_m.data
-    HAVING COUNT(*) > 1
-) AS Duplicates 
-ON SPLIT_PART(m.documento, '/', 1) = Duplicates.documento_base AND m.data = Duplicates.data
-WHERE m.data BETWEEN %s AND %s
-  AND mm.forma_pgto = 't'
-  AND mm.conta_debitar ILIKE '1.3.01%%'
-  AND mm.nome NOT LIKE '%%PARCELADO%%'
-  AND e.grid = %s
-  AND (nf.grid IS NULL OR nfs.situacao = 310)
-ORDER BY m.data, SPLIT_PART(m.documento, '/', 1)
-        """
-        # A querie leva 6 parâmetros devido à repetição de dates e empresa na subquery
-        params = (dt_periodo_ini, dt_periodo_fim, empresa, dt_periodo_ini, dt_periodo_fim, empresa)
-        cursor.execute(query, params)
-        
-        columns = [desc[0] for desc in cursor.description]
-        results = []
-        for row in cursor.fetchall():
-            row_dict = dict(zip(columns, row))
-            for k, v in row_dict.items():
-                if isinstance(v, (datetime.datetime, datetime.date)):
-                    row_dict[k] = v.strftime("%Y-%m-%d")
-                elif hasattr(v, 'quantize') or type(v).__name__ == 'Decimal':
-                    row_dict[k] = float(v)
-            results.append(row_dict)
-            
-        cursor.close()
-        conn.close()
-
-        return jsonify({"status": "success", "data": results})
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Erro de banco: {str(e)}"}), 500
-
-if __name__ == '__main__':
+# @app.route('/api/empresas', methods=['GET'])
+# def get_empresas():
+#     """
+#     [DESATIVADO] Rota legada de listagem de empresas.
+#     """
+#     config = load_config()
+#     if not config:
+#         return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
+# 
+#     try:
+#         conn = psycopg2.connect(
+#             host=config['host'],
+#             port=config.get('port', 5432),
+#             database=config['database'],
+#             user=config['user'],
+#             password=config['password'],
+#             connect_timeout=20
+#         )
+#         conn.set_client_encoding('WIN1252')
+#         cursor = conn.cursor()
+#         
+#         cursor.execute("SELECT grid as codigo, nome_reduzido as empresa FROM empresa ORDER BY nome_reduzido")
+#         columns = [desc[0] for desc in cursor.description]
+#         results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+# 
+#         cursor.close()
+#         conn.close()
+# 
+#         return jsonify({"status": "success", "data": results})
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": str(e)}), 500
+# 
+# @app.route('/api/relatorios/transacoes-pos', methods=['POST'])
+# def get_transacoes_pos():
+#     """
+#     [DESATIVADO] Rota legada de relatório de transações sem TEF.
+#     """
+#     data = request.json
+#     dt_periodo_ini = data.get('data_inicial')
+#     dt_periodo_fim = data.get('data_final')
+#     empresa = data.get('codigo_empresa')
+# 
+#     if not all([dt_periodo_ini, dt_periodo_fim, empresa]):
+#         return jsonify({"status": "error", "message": "Data inicial, data final e empresa são obrigatórios."}), 400
+# 
+#     config = load_config()
+#     if not config:
+#         return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
+# 
+#     try:
+#         conn = psycopg2.connect(
+#             host=config['host'], port=config.get('port', 5432),
+#             database=config['database'], user=config['user'], password=config['password']
+#         )
+#         conn.set_client_encoding('WIN1252')
+#         cursor = conn.cursor()
+#         
+#         query = """
+#             SELECT
+#               mm.conta_debitar as plano_conta,
+#               mm.nome as forma_pagamento, 
+#               m.data,
+#               m.turno,
+#               c.nome as conta_caixa,
+#               m.valor, 
+#               m.documento,
+#               m.usuario,
+#               nf.numero_nota,
+#               e.nome_reduzido as empresa
+#             FROM movto m
+#             JOIN motivo_movto mm ON (mm.grid = m.motivo)
+#             LEFT JOIN conta c ON (c.codigo=m.conta_creditar)
+#             LEFT JOIN nota_fiscal nf ON (nf.mlid=m.mlid)
+#             LEFT JOIN empresa e ON (e.grid=m.empresa)
+#             WHERE mm.forma_pgto = 't'
+#               AND mm.conta_debitar ILIKE '1.3.01%%'
+#               AND NOT EXISTS (SELECT 1 FROM tef_transacao t WHERE t.movto = m.grid)
+#               AND m.data BETWEEN %s AND %s
+#               AND e.grid = %s
+#             ORDER BY m.documento
+#         """
+#         cursor.execute(query, (dt_periodo_ini, dt_periodo_fim, empresa))
+#         
+#         columns = [desc[0] for desc in cursor.description]
+#         results = []
+#         for row in cursor.fetchall():
+#             row_dict = dict(zip(columns, row))
+#             for k, v in row_dict.items():
+#                 if isinstance(v, (datetime.datetime, datetime.date)):
+#                     row_dict[k] = v.strftime("%Y-%m-%d %H:%M:%S")
+#                 elif hasattr(v, 'quantize') or type(v).__name__ == 'Decimal':
+#                     row_dict[k] = float(v)
+#             results.append(row_dict)
+#             
+#         cursor.close()
+#         conn.close()
+# 
+#         return jsonify({"status": "success", "data": results})
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": f"Erro de banco: {str(e)}"}), 500
+# 
+# @app.route('/api/relatorios/transacoes-duplicadas', methods=['POST'])
+# def get_transacoes_duplicadas():
+#     """
+#     [DESATIVADO] Rota legada de relatório de transações duplicadas.
+#     """
+#     data = request.json
+#     dt_periodo_ini = data.get('data_inicial')
+#     dt_periodo_fim = data.get('data_final')
+#     empresa = data.get('codigo_empresa')
+# 
+#     if not all([dt_periodo_ini, dt_periodo_fim, empresa]):
+#         return jsonify({"status": "error", "message": "Data inicial, data final e empresa são obrigatórios."}), 400
+# 
+#     config = load_config()
+#     if not config:
+#         return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
+# 
+#     try:
+#         conn = psycopg2.connect(
+#             host=config['host'], port=config.get('port', 5432),
+#             database=config['database'], user=config['user'], password=config['password']
+#         )
+#         conn.set_client_encoding('WIN1252')
+#         cursor = conn.cursor()
+#         
+#         query = """
+# SELECT
+#     mm.conta_debitar,
+#     mm.nome AS nome_cartao,
+#     m.data,
+#     m.turno,
+#     c.nome AS nome_caixa,
+#     m.documento,
+#     m.vencto,
+#     nf.numero_nota,
+#     nfts.nome AS status,
+#     m.valor,
+#     m.usuario,
+#     e.nome_reduzido AS nome_empresa,
+#     CASE 
+#         WHEN tt.autorizacao IS NOT NULL THEN tt.autorizacao 
+#         ELSE 'Sem Autorização TEF' 
+#     END AS autorizacao_tef
+# FROM movto m
+# INNER JOIN motivo_movto AS mm ON m.motivo = mm.grid
+# LEFT JOIN empresa AS e ON e.grid = m.empresa
+# LEFT JOIN conta AS c ON m.conta_creditar = c.codigo
+# LEFT JOIN tef_transacao AS tt ON m.grid = tt.movto
+# LEFT JOIN nota_fiscal AS nf ON nf.mlid = m.mlid
+# LEFT JOIN nota_fiscal_situacao AS nfs ON nf.grid = nfs.nota_fiscal
+# LEFT JOIN nota_fiscal_tipo_situacao AS nfts ON nfs.situacao = nfts.codigo
+# INNER JOIN (
+#     SELECT
+#         SPLIT_PART(sub_m.documento, '/', 1) AS documento_base,
+#         sub_m.data
+#     FROM movto sub_m
+#     INNER JOIN motivo_movto sub_mm ON sub_m.motivo = sub_mm.grid
+#     LEFT JOIN empresa e2 ON e2.grid = sub_m.empresa
+#     WHERE sub_m.data BETWEEN %s AND %s
+#       AND sub_mm.forma_pgto = 't'
+#       AND sub_mm.conta_debitar ILIKE '1.3.01%%'
+#       AND sub_mm.nome NOT LIKE '%%PARCELADO%%'
+#       AND e2.grid = %s
+#     GROUP BY SPLIT_PART(sub_m.documento, '/', 1), sub_m.data
+#     HAVING COUNT(*) > 1
+# ) AS Duplicates 
+# ON SPLIT_PART(m.documento, '/', 1) = Duplicates.documento_base AND m.data = Duplicates.data
+# WHERE m.data BETWEEN %s AND %s
+#   AND mm.forma_pgto = 't'
+#   AND mm.conta_debitar ILIKE '1.3.01%%'
+#   AND mm.nome NOT LIKE '%%PARCELADO%%'
+#   AND e.grid = %s
+#   AND (nf.grid IS NULL OR nfs.situacao = 310)
+# ORDER BY m.data, SPLIT_PART(m.documento, '/', 1)
+#         """
+#         # A querie leva 6 parâmetros devido à repetição de dates e empresa na subquery
+#         params = (dt_periodo_ini, dt_periodo_fim, empresa, dt_periodo_ini, dt_periodo_fim, empresa)
+#         cursor.execute(query, params)
+#         
+#         columns = [desc[0] for desc in cursor.description]
+#         results = []
+#         for row in cursor.fetchall():
+#             row_dict = dict(zip(columns, row))
+#             for k, v in row_dict.items():
+#                 if isinstance(v, (datetime.datetime, datetime.date)):
+#                     row_dict[k] = v.strftime("%Y-%m-%d")
+#                 elif hasattr(v, 'quantize') or type(v).__name__ == 'Decimal':
+#                     row_dict[k] = float(v)
+#             results.append(row_dict)
+#             
+#         cursor.close()
+#         conn.close()
+# 
+#         return jsonify({"status": "success", "data": results})
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": f"Erro de banco: {str(e)}"}), 500
+# 
+# if __name__ == '__main__':
     # Roda o servidor de Agent/API local na porta 5000 em modo de desenvolvimento
     app.run(host='0.0.0.0', debug=True, port=5000)
