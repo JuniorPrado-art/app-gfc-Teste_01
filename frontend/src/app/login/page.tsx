@@ -69,6 +69,7 @@ export default function Login() {
         // Salva a Role localmente para gerenciar o layout
         localStorage.setItem('gfc_role', data.role);
         localStorage.setItem('gfc_user', formData.username);
+        if (data.cliente) localStorage.setItem('gfc_cliente', data.cliente);
 
         setTimeout(() => {
           window.location.href = '/dashboard';

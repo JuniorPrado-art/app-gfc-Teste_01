@@ -8,7 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import email.utils
-from config_manager import save_config, load_config
+from config_manager import load_client_config, get_all_clients
 import threading
 import time
 import requests
@@ -69,12 +69,9 @@ def save_configuration():
 @app.route('/api/config/load', methods=['GET'])
 def get_configuration():
     """
-    Retorna as configurações existentes se houverem, para preenchimento automático.
-    (Senha será enviada em branco no frontend por segurança para evitar exposição na API)
+    Descontinuado em Multi-Tenant.
     """
-    config = load_config()
-    if not config:
-        return jsonify({"status": "error", "message": "Nenhuma configuração encontrada."}), 404
+    return jsonify({"status": "error", "message": "Utilize o Cadastro de Clientes."}), 404
         
     # Nunca devolver a senha limpa na API via GET por segurança visual do painel,
     # A não ser que seja um request exigindo descriptografia local pro admin. 
@@ -114,7 +111,7 @@ def auth_login():
                     # Validar a senha com hash
                     stored_hash = user.get('password')
                     if stored_hash and check_password_hash(stored_hash, password):
-                        return jsonify({"status": "success", "role": "client", "message": "Autenticado com sucesso."})
+                        return jsonify({"status": "success", "role": "client", "cliente": user.get('cliente'), "message": "Autenticado com sucesso."})
                     
         except Exception as e:
             return jsonify({"status": "error", "message": f"Erro interno ao validar login: {str(e)}"}), 500
@@ -346,7 +343,7 @@ def save_visibility():
 
 USERS_CONFIG_FILE = 'users_config.json'
 EMAIL_CONFIG_FILE = 'email_config.json'
-ALERTAS_CONFIG_FILE = 'alertas_config.json'
+CLIENTES_CONFIG_FILE = 'clientes_config.json'
 
 @app.route('/api/config/usuarios', methods=['GET'])
 def get_usuarios_config():
@@ -420,27 +417,39 @@ def save_email_config():
     sync_file_to_github(EMAIL_CONFIG_FILE)
     return jsonify({"status": "success", "message": "Configurações de E-mail salvas."})
 
-@app.route('/api/config/alertas', methods=['GET'])
-def get_alertas_config():
-    if os.path.exists(ALERTAS_CONFIG_FILE):
-        with open(ALERTAS_CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return jsonify({"status": "success", "data": json.load(f)})
-    return jsonify({"status": "success", "data": {}})
+@app.route('/api/config/clientes', methods=['GET'])
+def get_clientes_config():
+    if os.path.exists(CLIENTES_CONFIG_FILE):
+        with open(CLIENTES_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if 'clientes' in data:
+                for cli in data['clientes']:
+                    if cli.get('DB_PASS'): cli['DB_PASS'] = "********"
+                    if cli.get('TELEGRAM_BOT_TOKEN'): cli['TELEGRAM_BOT_TOKEN'] = "********"
+                    if cli.get('VAPID_PRIVATE_KEY'): cli['VAPID_PRIVATE_KEY'] = "********"
+            return jsonify({"status": "success", "data": data})
+    return jsonify({"status": "success", "data": {"clientes": []}})
 
 
 @app.route('/api/notifications/vapidPublicKey', methods=['GET'])
 def get_vapid_public_key():
-    public_key = os.environ.get('VAPID_PUBLIC_KEY')
+    cliente = request.args.get('cliente', '')
+    if not cliente: return jsonify({"status": "error", "message": "Cliente não informado"}), 400
+    cfg = load_client_config(cliente)
+    if not cfg: return jsonify({"status": "error", "message": "Cliente não configurado"}), 400
+    public_key = cfg.get('VAPID_PUBLIC_KEY')
     if public_key:
         return jsonify({"status": "success", "publicKey": public_key})
-    return jsonify({"status": "error", "message": "VAPID key not configured as environment variable"}), 500
+    return jsonify({"status": "error", "message": "VAPID key not configured for client"}), 500
 
 @app.route('/api/notifications/subscribe', methods=['POST'])
 def subscribe_notification():
     subscription = request.json
-    if not subscription:
-        return jsonify({"status": "error", "message": "Dados inválidos."}), 400
+    cliente = request.args.get('cliente', '')
+    if not subscription or not cliente:
+        return jsonify({"status": "error", "message": "Dados inválidos ou cliente ausente."}), 400
         
+    subscription['cliente'] = cliente
     subs = []
     if os.path.exists(SUBSCRIPTIONS_FILE):
         try:
@@ -450,8 +459,9 @@ def subscribe_notification():
             pass
             
     exists = False
-    for s in subs:
+    for i, s in enumerate(subs):
         if s.get('endpoint') == subscription.get('endpoint'):
+            subs[i] = subscription
             exists = True
             break
             
@@ -463,20 +473,42 @@ def subscribe_notification():
         
     return jsonify({"status": "success", "message": "Inscrição realizada."})
 
-@app.route('/api/config/alertas', methods=['POST'])
-def save_alertas_config():
+@app.route('/api/config/clientes', methods=['POST'])
+def save_clientes_config():
     data = request.json
-    with open(ALERTAS_CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    sync_file_to_github(ALERTAS_CONFIG_FILE)
-    return jsonify({"status": "success", "message": "Configurações de Alertas salvas."})
+    new_clientes = data.get('clientes', [])
+
+    old_data = {"clientes": []}
+    if os.path.exists(CLIENTES_CONFIG_FILE):
+        try:
+            with open(CLIENTES_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                old_data = json.load(f)
+        except:
+            pass
+            
+    old_map = {str(c.get('alias')): c for c in old_data.get('clientes', [])}
+    
+    for cli in new_clientes:
+        alias = str(cli.get('alias'))
+        if alias in old_map:
+            if cli.get('DB_PASS') == "********": cli['DB_PASS'] = old_map[alias].get('DB_PASS', '')
+            if cli.get('TELEGRAM_BOT_TOKEN') == "********": cli['TELEGRAM_BOT_TOKEN'] = old_map[alias].get('TELEGRAM_BOT_TOKEN', '')
+            if cli.get('VAPID_PRIVATE_KEY') == "********": cli['VAPID_PRIVATE_KEY'] = old_map[alias].get('VAPID_PRIVATE_KEY', '')
+
+    with open(CLIENTES_CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump({"clientes": new_clientes}, f, ensure_ascii=False, indent=4)
+    sync_file_to_github(CLIENTES_CONFIG_FILE)
+    return jsonify({"status": "success", "message": "Configurações de Clientes salvas."})
 
 
 @app.route('/api/monitoramento/prevendas', methods=['GET'])
 def get_prevendas():
-    config = load_config()
+    alias = request.args.get('cliente')
+    if not alias:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    config = load_client_config(alias)
     if not config:
-        return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
+        return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
 
     try:
         conn = psycopg2.connect(
@@ -527,9 +559,12 @@ def get_prevendas():
 
 @app.route('/api/monitoramento/sincronia', methods=['GET'])
 def get_sincronia():
-    config = load_config()
+    alias = request.args.get('cliente')
+    if not alias:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    config = load_client_config(alias)
     if not config:
-        return jsonify({"status": "error", "message": "Sistema não configurado."}), 400
+        return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
 
     try:
         conn = psycopg2.connect(
@@ -586,9 +621,11 @@ def get_sincronia():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-def send_telegram_alert(mensagem):
-    token = os.environ.get('TELEGRAM_BOT_TOKEN')
-    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+def send_telegram_alert(mensagem, cliente_alias):
+    cfg = load_client_config(cliente_alias)
+    if not cfg: return
+    token = cfg.get('TELEGRAM_BOT_TOKEN')
+    chat_id = cfg.get('TELEGRAM_CHAT_ID')
     if not token or not chat_id:
         return
     try:
@@ -598,11 +635,13 @@ def send_telegram_alert(mensagem):
     except Exception as e:
         print("Erro Telegram:", e)
 
-def send_webpush_alert(titulo, mensagem):
+def send_webpush_alert(titulo, mensagem, cliente_alias):
     if not os.path.exists(SUBSCRIPTIONS_FILE):
         return
         
-    vapid_private_key = os.environ.get('VAPID_PRIVATE_KEY')
+    cfg = load_client_config(cliente_alias)
+    if not cfg: return
+    vapid_private_key = cfg.get('VAPID_PRIVATE_KEY')
     if not vapid_private_key:
         return
         
@@ -617,6 +656,11 @@ def send_webpush_alert(titulo, mensagem):
         valid_subs = []
         changed = False
         for sub in subs:
+            # Pula se a subscription não for do cliente atual, mas mantém na lista final
+            if sub.get('cliente') != cliente_alias:
+                valid_subs.append(sub)
+                continue
+                
             try:
                 webpush(
                     subscription_info=sub,
@@ -643,24 +687,26 @@ def send_webpush_alert(titulo, mensagem):
     except Exception as e:
         print("Erro WebPush Geral:", e)
 
-def executar_disparo_alerta(tipo, force_send=False):
+def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
     # 1. Checa as configurações do E-mail e dos Destinatários
-    if not os.path.exists(EMAIL_CONFIG_FILE) or not os.path.exists(ALERTAS_CONFIG_FILE):
+    if not os.path.exists(EMAIL_CONFIG_FILE):
         return False, "E-mails ou Servidor SMTP não configurados.", False
         
     with open(EMAIL_CONFIG_FILE, 'r', encoding='utf-8') as f:
         smtp_cfg = json.load(f)
-    with open(ALERTAS_CONFIG_FILE, 'r', encoding='utf-8') as f:
-        alerta_cfg = json.load(f)
+        
+    config = load_client_config(cliente_alias)
+    if not config:
+        return False, f"Cliente {cliente_alias} não encontrado.", False
         
     remetente = smtp_cfg.get('email')
     senha = smtp_cfg.get('password')
     host = smtp_cfg.get('host')
     porta = smtp_cfg.get('port', 587)
     
-    destinatarios_str = alerta_cfg.get('emails', '')
+    destinatarios_str = config.get('emails', '')
     if not remetente or not senha or not host or not destinatarios_str:
-        return False, "Configurações de E-mail incompletas.", False
+        return False, "Configurações de E-mail ou destinatários incompletas.", False
 
     destinatarios_str = destinatarios_str.replace(',', ';')
     destinatarios = [e.strip() for e in destinatarios_str.split(';') if e.strip()]
@@ -674,7 +720,6 @@ def executar_disparo_alerta(tipo, force_send=False):
             # Ao invés de usar get_prevendas(), podemos refatorar para chamar a rotina core.
             # Mas, como get_prevendas() retorna Flask Responde, chama a via requests locale? Não,
             # Melhor refatorar pegando os dados diretos do banco.
-            config = load_config()
             conn = psycopg2.connect(
                 host=config['host'], port=config.get('port', 5432),
                 database=config['database'], user=config['user'], password=config['password']
@@ -704,7 +749,7 @@ def executar_disparo_alerta(tipo, force_send=False):
             if len(pendentes) == 0 and not force_send:
                 return True, "Nenhuma pendência, e-mail não enviado.", False
 
-            assunto = "[Agente GFC] Alerta de Pré-vendas Pendentes"
+            assunto = f"[Agente GFC - {cliente_alias}] Alerta de Pré-vendas Pendentes"
             
             def format_curr(val):
                 if val is None or val == 'None': return 'R$ 0,00'
@@ -755,7 +800,6 @@ def executar_disparo_alerta(tipo, force_send=False):
             '''
             
         elif tipo == 'sincronia':
-            config = load_config()
             conn = psycopg2.connect(
                 host=config['host'], port=config.get('port', 5432),
                 database=config['database'], user=config['user'], password=config['password']
@@ -795,7 +839,7 @@ def executar_disparo_alerta(tipo, force_send=False):
             if len(atrasados) == 0 and not force_send:
                 return True, "Nenhuma pendência, e-mail não enviado.", False
 
-            assunto = "[Agente GFC] Alerta de Atraso na Sincronia de Filiais"
+            assunto = f"[Agente GFC - {cliente_alias}] Alerta de Atraso na Sincronia de Filiais"
             
             def format_dt(dt_str):
                 if not dt_str or dt_str == 'None': return dt_str
@@ -867,11 +911,11 @@ def executar_disparo_alerta(tipo, force_send=False):
             
         
         if tipo == 'prevendas':
-            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(pendentes)} pré-venda(s) precisando de atenção!")
-            send_webpush_alert("Alerta de Pré-Vendas", f"Existem {len(pendentes)} pré-vendas pendentes.")
+            send_telegram_alert(f"⚠️ [ALERTA - {cliente_alias}] Temos {len(pendentes)} pré-venda(s) precisando de atenção!", cliente_alias)
+            send_webpush_alert(f"Alerta de Pré-Vendas - {cliente_alias}", f"Existem {len(pendentes)} pré-vendas pendentes.", cliente_alias)
         elif tipo == 'sincronia':
-            send_telegram_alert(f"⚠️ [ALERTA] Temos {len(atrasados)} posto(s) atrasado(s) na sincronia!")
-            send_webpush_alert("Alerta de Sincronia", f"Existem {len(atrasados)} postos atrasados.")
+            send_telegram_alert(f"⚠️ [ALERTA - {cliente_alias}] Temos {len(atrasados)} posto(s) atrasado(s) na sincronia!", cliente_alias)
+            send_webpush_alert(f"Alerta de Sincronia - {cliente_alias}", f"Existem {len(atrasados)} postos atrasados.", cliente_alias)
             
         server.send_message(msg)
     
@@ -888,12 +932,13 @@ def executar_disparo_alerta(tipo, force_send=False):
 
 class AlertManager:
     def __init__(self):
-        self.state = {"prevendas": False, "sincronia": False}
-        self.threads = {"prevendas": None, "sincronia": None}
-        self.failing_state = {"prevendas": False, "sincronia": False}
+        self.state = {}
+        self.threads = {}
+        self.failing_state = {}
         self.load_state()
 
     def load_state(self):
+        import os, json
         if os.path.exists(ALERT_STATE_FILE):
             try:
                 with open(ALERT_STATE_FILE, 'r', encoding='utf-8') as f:
@@ -902,73 +947,84 @@ class AlertManager:
                 pass
         
         # Recuperando estado persistente e reiniciando as threads se necessário
-        if self.state.get("prevendas"):
-            self._spawn_thread("prevendas")
-        if self.state.get("sincronia"):
-            self._spawn_thread("sincronia")
+        for k, v in self.state.items():
+            if v:
+                # k = "prevendas_CLI1"
+                parts = k.split('_', 1)
+                if len(parts) == 2:
+                    tipo, cliente = parts
+                    self._spawn_thread(tipo, cliente)
 
     def save_state(self):
+        import json
         with open(ALERT_STATE_FILE, 'w', encoding='utf-8') as f:
             json.dump(self.state, f)
         sync_file_to_github(ALERT_STATE_FILE)
 
-    def set_estado(self, tipo, status, skip_first=False):
+    def set_estado(self, tipo, cliente, status, skip_first=False):
         if tipo not in ["prevendas", "sincronia"]:
             return
 
+        key = f"{tipo}_{cliente}"
+
         # Para interromper
         if not status:
-            self.state[tipo] = False
+            self.state[key] = False
             self.save_state()
             return
 
         # Para Iniciar
-        if status and not self.state[tipo]:
-            self.state[tipo] = True
+        if status and not self.state.get(key, False):
+            self.state[key] = True
             self.save_state()
-            self._spawn_thread(tipo, skip_first)
+            self._spawn_thread(tipo, cliente, skip_first)
 
-    def _spawn_thread(self, tipo, skip_first=False):
-        self.threads[tipo] = threading.Thread(target=self._loop, args=(tipo, skip_first), daemon=True)
-        self.threads[tipo].start()
+    def _spawn_thread(self, tipo, cliente, skip_first=False):
+        key = f"{tipo}_{cliente}"
+        self.threads[key] = threading.Thread(target=self._loop, args=(tipo, cliente, skip_first), daemon=True)
+        self.threads[key].start()
 
-    def _is_active(self, tipo):
+    def _is_active(self, tipo, cliente):
+        key = f"{tipo}_{cliente}"
+        import os, json
         if os.path.exists(ALERT_STATE_FILE):
             try:
                 with open(ALERT_STATE_FILE, 'r', encoding='utf-8') as f:
                     st = json.load(f)
-                    return st.get(tipo, False)
+                    return st.get(key, False)
             except:
                 pass
         return False
 
-    def _loop(self, tipo, skip_first=False):
+    def _loop(self, tipo, cliente, skip_first=False):
+        key = f"{tipo}_{cliente}"
+        import time
         if skip_first:
             for _ in range(900):
-                if not self._is_active(tipo):
+                if not self._is_active(tipo, cliente):
                     break
                 time.sleep(1)
 
-        while self._is_active(tipo):
+        while self._is_active(tipo, cliente):
             try:
                 # Com is_background, processa e-mail apenas se pendentes > 0.
-                sucesso, msg, has_errors = executar_disparo_alerta(tipo, force_send=False)
+                sucesso, msg, has_errors = executar_disparo_alerta(tipo, cliente, force_send=False)
                 
-                was_failing = self.failing_state.get(tipo, False)
+                was_failing = self.failing_state.get(key, False)
                 if has_errors:
-                    self.failing_state[tipo] = True
+                    self.failing_state[key] = True
                 elif was_failing and not has_errors:
-                    self.failing_state[tipo] = False
+                    self.failing_state[key] = False
                     # DISPARAR ALERTA DE ERRO SANADO!
                     nome_tipo = "Pré-vendas" if tipo == 'prevendas' else "Sincronia"
-                    send_telegram_alert(f"✅ [ERRO SANADO] O problema de {nome_tipo} foi resolvido!")
-                    send_webpush_alert("Erro Sanado", f"O problema de {nome_tipo} foi resolvido!")
+                    send_telegram_alert(f"✅ [ERRO SANADO - {cliente}] O problema de {nome_tipo} foi resolvido!", cliente)
+                    send_webpush_alert(f"Erro Sanado - {cliente}", f"O problema de {nome_tipo} foi resolvido!", cliente)
             except Exception as e:
-                print(f"Erro na thread de monitoramento ({tipo}): {e}")
+                print(f"Erro na thread de monitoramento ({key}): {e}")
             
             # Pausa de 15 minutos checando interrupção a cada 1 segundo
             for _ in range(900):
-                if not self._is_active(tipo):
+                if not self._is_active(tipo, cliente):
                     break
                 time.sleep(1)
 
@@ -979,7 +1035,10 @@ alert_manager = AlertManager()
 def disparar_alerta():
     data = request.json
     tipo = data.get('tipo', '')
-    sucesso, msg, _ = executar_disparo_alerta(tipo, force_send=True)
+    cliente = data.get('cliente', '')
+    if not cliente:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    sucesso, msg, _ = executar_disparo_alerta(tipo, cliente, force_send=True)
     if sucesso:
         return jsonify({"status": "success", "message": msg})
     else:
@@ -988,29 +1047,34 @@ def disparar_alerta():
 @app.route('/api/monitoramento/status-rotina', methods=['GET'])
 def status_rotina():
     tipo = request.args.get('tipo', '')
-    if tipo in alert_manager.state:
-        return jsonify({"status": "success", "ativo": alert_manager.state[tipo]})
-    return jsonify({"status": "error", "message": "Tipo desconhecido."}), 400
+    cliente = request.args.get('cliente', '')
+    if not cliente:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    key = f"{tipo}_{cliente}"
+    return jsonify({"status": "success", "ativo": alert_manager.state.get(key, False)})
 
 @app.route('/api/monitoramento/toggle-rotina', methods=['POST'])
 def toggle_rotina():
     data = request.json
     tipo = data.get('tipo', '')
     ativo = data.get('ativo', False)
+    cliente = data.get('cliente', '')
     
-    if tipo in alert_manager.state:
+    if not cliente:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+
+    if tipo in ["prevendas", "sincronia"]:
         if ativo:
             # Validação pró-ativa das configurações antes de dar start na thread de alertas
-            if not os.path.exists(EMAIL_CONFIG_FILE) or not os.path.exists(ALERTAS_CONFIG_FILE):
-                return jsonify({"status": "error", "message": "Por favor, cadastre primeiro as Informações do Cliente e as Configurações de E-Mail do Aplicativo."}), 400
+            cfg = load_client_config(cliente)
+            if not cfg:
+                return jsonify({"status": "error", "message": f"Cliente {cliente} não configurado."}), 400
+
+            if not os.path.exists(EMAIL_CONFIG_FILE):
+                return jsonify({"status": "error", "message": "Configurações de E-Mail globais do Aplicativo ausentes."}), 400
                 
-            with open(ALERTAS_CONFIG_FILE, 'r', encoding='utf-8') as f:
-                try:
-                    alerta_cfg = json.load(f)
-                except json.JSONDecodeError:
-                    alerta_cfg = {}
-            if not alerta_cfg.get('emails') or not alerta_cfg.get('emails').strip():
-                return jsonify({"status": "error", "message": "Nenhum e-mail de destinatário foi cadastrado na tela de Inf. Clientes. Não é possível iniciar alertas sem um destino."}), 400
+            if not cfg.get('emails') or not cfg.get('emails').strip():
+                return jsonify({"status": "error", "message": "Nenhum e-mail de destinatário foi cadastrado para o cliente. Não é possível iniciar alertas sem um destino."}), 400
             
             with open(EMAIL_CONFIG_FILE, 'r', encoding='utf-8') as f:
                 try:
@@ -1021,15 +1085,15 @@ def toggle_rotina():
                 return jsonify({"status": "error", "message": "O remetente do GFC (E-mail, Senha ou Host) não foi configurado corretamente na aba de 'Conf. Email Aplicativo'."}), 400
 
             # Realiza um teste imadiato disparando o email
-            sucesso, msg, _ = executar_disparo_alerta(tipo, force_send=True)
+            sucesso, msg, _ = executar_disparo_alerta(tipo, cliente, force_send=True)
             if not sucesso:
                 return jsonify({"status": "error", "message": f"Falha no envio do alerta de teste: {msg}"}), 400
 
-            alert_manager.set_estado(tipo, ativo, skip_first=True)
+            alert_manager.set_estado(tipo, cliente, ativo, skip_first=True)
             estado_str = "iniciada"
             return jsonify({"status": "success", "message": f"Rotina iniciada com sucesso! Alerta de teste enviado: {msg}", "ativo": ativo})
         else:
-            alert_manager.set_estado(tipo, ativo)
+            alert_manager.set_estado(tipo, cliente, ativo)
             estado_str = "finalizada"
             return jsonify({"status": "success", "message": f"Rotina de {tipo} {estado_str} com sucesso!", "ativo": ativo})
     

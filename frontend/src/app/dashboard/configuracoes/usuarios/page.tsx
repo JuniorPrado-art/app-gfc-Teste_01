@@ -6,6 +6,7 @@ type UserConfig = {
   id: string;
   username: string;
   email: string;
+  cliente?: string;
   password?: string;
 };
 
@@ -16,16 +17,32 @@ export default function CadastroUsuarios() {
   const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [clientesList, setClientesList] = useState<{alias: string, CLIENT_NAME: string}[]>([]);
+
   const [formData, setFormData] = useState<UserConfig>({
     id: '',
     username: '',
     email: '',
+    cliente: '',
     password: ''
   });
 
   useEffect(() => {
     fetchUsers();
+    fetchClientes();
   }, []);
+
+  const fetchClientes = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/clientes`);
+      const data = await res.json();
+      if (data.status === 'success' && data.data && data.data.clientes) {
+        setClientesList(data.data.clientes);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -52,6 +69,7 @@ export default function CadastroUsuarios() {
       id: user.id,
       username: user.username,
       email: user.email,
+      cliente: user.cliente || '',
       password: '********' // Mantém mascarado, se o usuário não alterar, o backend saberá
     });
   };
@@ -68,7 +86,7 @@ export default function CadastroUsuarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.username || !formData.email || !formData.password) {
+    if (!formData.username || !formData.email || !formData.password || !formData.cliente) {
       setToast({ message: 'Todos os campos são obrigatórios.', type: 'error' });
       return;
     }
@@ -117,7 +135,7 @@ export default function CadastroUsuarios() {
 
   const resetForm = () => {
     setEditingId(null);
-    setFormData({ id: '', username: '', email: '', password: '' });
+    setFormData({ id: '', username: '', email: '', cliente: '', password: '' });
   };
 
   return (
@@ -152,6 +170,7 @@ export default function CadastroUsuarios() {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--glass-border)', textAlign: 'left' }}>
                   <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: 500 }}>Usuário</th>
+                  <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: 500 }}>Cliente</th>
                   <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: 500 }}>E-mail</th>
                   <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: 500, width: '100px', textAlign: 'center' }}>Ações</th>
                 </tr>
@@ -160,6 +179,7 @@ export default function CadastroUsuarios() {
                 {users.map(user => (
                   <tr key={user.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     <td style={{ padding: '12px 8px', color: 'white' }}>{user.username}</td>
+                    <td style={{ padding: '12px 8px', color: '#fbbf24', fontWeight: 'bold' }}>{user.cliente}</td>
                     <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{user.email}</td>
                     <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
@@ -204,6 +224,22 @@ export default function CadastroUsuarios() {
                 placeholder="Ex: cliente01"
                 required
               />
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Cliente Vinculado</label>
+              <select
+                name="cliente"
+                value={formData.cliente}
+                onChange={(e) => setFormData(prev => ({ ...prev, cliente: e.target.value }))}
+                className="gfc-input"
+                required
+              >
+                <option value="">Selecione o Cliente</option>
+                {clientesList.map(cli => (
+                  <option key={cli.alias} value={cli.alias}>{cli.alias} - {cli.CLIENT_NAME}</option>
+                ))}
+              </select>
             </div>
 
             <div className="input-group">

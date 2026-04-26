@@ -64,7 +64,8 @@ export default function DashboardLayout({
   const subscribeUserToPush = async (swRegistration?: ServiceWorkerRegistration) => {
     try {
       const reg = swRegistration || await navigator.serviceWorker.ready;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/vapidPublicKey`);
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/vapidPublicKey?cliente=${cliente}`);
       const data = await res.json();
       if (data.status === 'success') {
         const applicationServerKey = urlB64ToUint8Array(data.publicKey);
@@ -72,7 +73,7 @@ export default function DashboardLayout({
           userVisibleOnly: true,
           applicationServerKey: applicationServerKey
         });
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/subscribe`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/subscribe?cliente=${cliente}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(subscription)
@@ -196,17 +197,18 @@ export default function DashboardLayout({
           {role === 'admin' && (
             <div className="menu-group">
               <h3 className="menu-title" style={{ color: '#fbbf24' }}>Configurações (Admin)</h3>
-              <Link href="/dashboard/configuracoes/banco" className={`menu-item ${isActive('/configuracoes/banco')}`}>
+              {/* Banco de Dados foi desativado/ocultado e agora faz parte de Clientes */}
+              {/* <Link href="/dashboard/configuracoes/banco" className={`menu-item ${isActive('/configuracoes/banco')}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
                 Banco de Dados
-              </Link>
+              </Link> */}
               <Link href="/dashboard/configuracoes/email" className={`menu-item ${isActive('/configuracoes/email')}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 Conf. Email Aplicativo
               </Link>
-              <Link href="/dashboard/configuracoes/alertas" className={`menu-item ${isActive('/configuracoes/alertas')}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
-                Cadastro de Inf Clientes
+              <Link href="/dashboard/configuracoes/clientes" className={`menu-item ${isActive('/configuracoes/clientes')}`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Cadastro de Banco de Cliente
               </Link>
               <Link href="/dashboard/configuracoes/usuarios" className={`menu-item ${isActive('/configuracoes/usuarios')}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

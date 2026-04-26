@@ -22,7 +22,8 @@ export default function SincroniaPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia`);
+        const cliente = localStorage.getItem('gfc_cliente') || '';
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia?cliente=${cliente}`);
         if (res.status === 504) {
           setError('Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal. Tentando novamente...');
           setTimeout(fetchData, 15000); // Tenta novamente
@@ -42,7 +43,8 @@ export default function SincroniaPage() {
           setError(json.message || 'Erro ao carregar os dados.');
         }
 
-        const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/status-rotina?tipo=sincronia`);
+        const cliente = localStorage.getItem('gfc_cliente') || '';
+        const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/status-rotina?tipo=sincronia&cliente=${cliente}`);
         const statusJson = await statusRes.json();
         if (statusRes.ok && statusJson.status === 'success') {
           setRotinaAtiva(statusJson.ativo);
@@ -60,10 +62,11 @@ export default function SincroniaPage() {
     setAlerting(true);
     setToast(null);
     try {
+      const cliente = localStorage.getItem('gfc_cliente') || '';
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/toggle-rotina`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'sincronia', ativo: !rotinaAtiva })
+        body: JSON.stringify({ tipo: 'sincronia', ativo: !rotinaAtiva, cliente })
       });
       const data = await res.json();
       if (res.ok) {
