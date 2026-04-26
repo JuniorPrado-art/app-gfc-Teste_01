@@ -22,7 +22,12 @@ def load_client_config(alias):
                         "port": cli.get('DB_PORT', '5432'),
                         "database": cli.get('DB_NAME'),
                         "user": cli.get('DB_USER'),
-                        "password": cli.get('DB_PASS')
+                        "password": cli.get('DB_PASS'),
+                        "emails": cli.get('emails'),
+                        "TELEGRAM_BOT_TOKEN": cli.get('TELEGRAM_BOT_TOKEN'),
+                        "TELEGRAM_CHAT_ID": cli.get('TELEGRAM_CHAT_ID'),
+                        "VAPID_PUBLIC_KEY": cli.get('VAPID_PUBLIC_KEY'),
+                        "VAPID_PRIVATE_KEY": cli.get('VAPID_PRIVATE_KEY')
                     }
     except Exception as e:
         print("Erro ao carregar config do cliente:", e)
