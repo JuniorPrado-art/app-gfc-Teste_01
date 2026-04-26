@@ -43,7 +43,6 @@ export default function SincroniaPage() {
           setError(json.message || 'Erro ao carregar os dados.');
         }
 
-        const cliente = localStorage.getItem('gfc_cliente') || '';
         const statusRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/status-rotina?tipo=sincronia&cliente=${cliente}`);
         const statusJson = await statusRes.json();
         if (statusRes.ok && statusJson.status === 'success') {
