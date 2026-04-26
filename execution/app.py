@@ -45,14 +45,19 @@ def test_connection():
             database=db_name,
             user=db_user,
             password=db_pass,
-            connect_timeout=5
+            connect_timeout=20
         )
         conn.set_client_encoding('WIN1252')
         conn.close()
         return jsonify({"status": "success", "message": "Conexão com o PostgreSQL realizada com sucesso!"}), 200
         
+    except psycopg2.Error as e:
+        error_msg = str(e).lower()
+        if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
+            return jsonify({"status": "error", "message": "Não houve resposta do Banco de Dados. Acione o suporte"}), 400
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 400
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Erro de conexão: {str(e)}"}), 400
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 400
 
 
 @app.route('/api/config/save', methods=['POST'])
@@ -517,7 +522,7 @@ def get_prevendas():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=10
+            connect_timeout=20
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -552,10 +557,10 @@ def get_prevendas():
     except psycopg2.Error as e:
         error_msg = str(e).lower()
         if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
-            return jsonify({"status": "timeout", "message": "Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal."}), 504
-        return jsonify({"status": "error", "message": "Erro de consulta SQL no Banco: " + str(e)}), 500
+            return jsonify({"status": "error", "message": "Não houve resposta do Banco de Dados. Acione o suporte"}), 500
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
 
 @app.route('/api/monitoramento/sincronia', methods=['GET'])
 def get_sincronia():
@@ -573,7 +578,7 @@ def get_sincronia():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=10
+            connect_timeout=20
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -615,10 +620,10 @@ def get_sincronia():
     except psycopg2.Error as e:
         error_msg = str(e).lower()
         if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
-            return jsonify({"status": "timeout", "message": "Aguarde um momento, a conexão do banco esta demorando um pouco mais do que o normal."}), 504
-        return jsonify({"status": "error", "message": "Erro de consulta SQL no Banco: " + str(e)}), 500
+            return jsonify({"status": "error", "message": "Não houve resposta do Banco de Dados. Acione o suporte"}), 500
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
 
 
 def send_telegram_alert(mensagem, cliente_alias):
@@ -722,7 +727,8 @@ def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
             # Melhor refatorar pegando os dados diretos do banco.
             conn = psycopg2.connect(
                 host=config['host'], port=config.get('port', 5432),
-                database=config['database'], user=config['user'], password=config['password']
+                database=config['database'], user=config['user'], password=config['password'],
+                connect_timeout=20
             )
             conn.set_client_encoding('WIN1252')
             cursor = conn.cursor()
@@ -802,7 +808,8 @@ def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
         elif tipo == 'sincronia':
             conn = psycopg2.connect(
                 host=config['host'], port=config.get('port', 5432),
-                database=config['database'], user=config['user'], password=config['password']
+                database=config['database'], user=config['user'], password=config['password'],
+                connect_timeout=20
             )
             conn.set_client_encoding('WIN1252')
             cursor = conn.cursor()
@@ -1111,7 +1118,8 @@ def get_empresas():
             port=config.get('port', 5432),
             database=config['database'],
             user=config['user'],
-            password=config['password']
+            password=config['password'],
+            connect_timeout=20
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
