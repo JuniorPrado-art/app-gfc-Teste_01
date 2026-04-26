@@ -13,18 +13,17 @@
             "username": "Oswaldo"
         },
         {
-            "id": "1776543331506",
-            "username": "Danilo",
             "email": "danilo.honorato@franqueadolinx.com.br",
-            "cliente": "MATRIZ_IPE",
-            "password": "scrypt:32768:8:1$bOyc7PSdCmdKof53$06a562a3fce6b643cb96d456f2f70b3c0594473abe6c22026936a49a4cb1afb24ad096da1634b9a783147a2a9fc30dc33213403ff3a2960e5ba3b28ac5025a2b"
+            "id": "1776543331506",
+            "password": "scrypt:32768:8:1$bOyc7PSdCmdKof53$06a562a3fce6b643cb96d456f2f70b3c0594473abe6c22026936a49a4cb1afb24ad096da1634b9a783147a2a9fc30dc33213403ff3a2960e5ba3b28ac5025a2b",
+            "username": "Danilo"
         },
         {
-            "cliente": "MATRIZ_FALEIROS",
-            "email": "milton.ferreira@franqueadolinx.com.br",
             "id": "1776543359304",
-            "password": "scrypt:32768:8:1$Kt4JY0X0rrYLoi3f$c3aed117ba866b48a613328cab8ca7d0a145be6dc2743beff9f5ac9cc1ac577848e4503eda86c21b6dbac534d50312d1891c535566f132d587824cbbd897910f",
-            "username": "Milton"
+            "username": "Milton",
+            "email": "milton.ferreira@franqueadolinx.com.br",
+            "cliente": "MATRIZ_FALEIROS",
+            "password": "scrypt:32768:8:1$Kt4JY0X0rrYLoi3f$c3aed117ba866b48a613328cab8ca7d0a145be6dc2743beff9f5ac9cc1ac577848e4503eda86c21b6dbac534d50312d1891c535566f132d587824cbbd897910f"
         }
     ]
 }
