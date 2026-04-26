@@ -30,7 +30,8 @@ export default function DashboardIndex() {
       
     // Busca os dados da Sincronia para exibir no card da Visão Geral
     const fetchSincronia = () => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia`)
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/sincronia?cliente=${cliente}`)
         .then(async res => {
           if (res.status === 504) {
             setSincroniaCount('timeout');
@@ -53,7 +54,8 @@ export default function DashboardIndex() {
 
     // Busca os dados das Pré-vendas Pendentes
     const fetchPrevendas = () => {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/prevendas`)
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/prevendas?cliente=${cliente}`)
         .then(async res => {
           if (res.status === 504) {
             setPrevendasCount('timeout');
