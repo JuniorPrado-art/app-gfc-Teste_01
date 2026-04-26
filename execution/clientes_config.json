@@ -15,17 +15,17 @@
             "emails": "milton.ferreira@franqueadolinx.com.br"
         },
         {
-            "alias": "MATRIZ_IPE",
             "CLIENT_NAME": "Matriz Rede IPE",
             "DB_HOST": " servidorpororoca18.ddns.net",
-            "DB_PORT": "5432",
             "DB_NAME": "matriz_rede_ipe",
-            "DB_USER": "postgres",
             "DB_PASS": "posto@posto#1234",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
             "TELEGRAM_BOT_TOKEN": "",
             "TELEGRAM_CHAT_ID": "",
-            "VAPID_PUBLIC_KEY": "",
             "VAPID_PRIVATE_KEY": "",
+            "VAPID_PUBLIC_KEY": "",
+            "alias": "MATRIZ_IPE",
             "emails": "milton.ferreira@franqueadolinx.com.br"
         }
     ]
