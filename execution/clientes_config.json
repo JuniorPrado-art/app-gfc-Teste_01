@@ -16,7 +16,7 @@
         },
         {
             "CLIENT_NAME": "Matriz Rede IPE",
-            "DB_HOST": " servidorpororoca18.ddns.net",
+            "DB_HOST": "servidorpororoca18.ddns.net",
             "DB_NAME": "matriz_rede_ipe",
             "DB_PASS": "posto@posto#1234",
             "DB_PORT": "5432",
