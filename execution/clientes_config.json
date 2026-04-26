@@ -1,17 +1,31 @@
 {
     "clientes": [
         {
-            "alias": "MATRIZ_FALEIROS",
             "CLIENT_NAME": "Matriz Rede Faleiros",
             "DB_HOST": "71a0065509a8.sn.mynetname.net",
-            "DB_PORT": "6238",
             "DB_NAME": "matriz_faleiros",
-            "DB_USER": "postgres",
             "DB_PASS": "posto@posto#1234",
+            "DB_PORT": "6238",
+            "DB_USER": "postgres",
             "TELEGRAM_BOT_TOKEN": "8494604037:AAG1IU5sY3jlp3_1lnYu-bbcahbYKOd6gwY",
             "TELEGRAM_CHAT_ID": "1003622010943",
-            "VAPID_PUBLIC_KEY": "-----BEGIN PRIVATE KEY----- MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg29huVwWxAvNyUdjp oV2ncNMgxAix993mgMnRg6FjeFOhRANCAAQB88fsti+HfZ63FdRGcQR6B4xCIGpK pCJ6FSsqJPU8XL7ZWWdM2UzzpRsNVXVct0l8KHm0hKPKvDHwThKoIlsL -----END PRIVATE KEY-----",
             "VAPID_PRIVATE_KEY": "BAHzx-y2L4d9nrcV1EZxBHoHjEIgakqkInoVKyok9TxcvtlZZ0zZTPOlGw1VdVy3SXwoebSEo8q8MfBOEqgiWws",
+            "VAPID_PUBLIC_KEY": "-----BEGIN PRIVATE KEY----- MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg29huVwWxAvNyUdjp oV2ncNMgxAix993mgMnRg6FjeFOhRANCAAQB88fsti+HfZ63FdRGcQR6B4xCIGpK pCJ6FSsqJPU8XL7ZWWdM2UzzpRsNVXVct0l8KHm0hKPKvDHwThKoIlsL -----END PRIVATE KEY-----",
+            "alias": "MATRIZ_FALEIROS",
+            "emails": "milton.ferreira@franqeuadolinx.com.br"
+        },
+        {
+            "alias": "MATRIZ_IPE",
+            "CLIENT_NAME": "Matriz Rede IPE",
+            "DB_HOST": "servidorpororoca18.ddns.net",
+            "DB_PORT": "5432",
+            "DB_NAME": "matriz_rede_ipe",
+            "DB_USER": "postgres",
+            "DB_PASS": "posto@posto#1234",
+            "TELEGRAM_BOT_TOKEN": "",
+            "TELEGRAM_CHAT_ID": "",
+            "VAPID_PUBLIC_KEY": "",
+            "VAPID_PRIVATE_KEY": "",
             "emails": "milton.ferreira@franqeuadolinx.com.br"
         }
     ]
