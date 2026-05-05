@@ -177,18 +177,6 @@ export default function DashboardIndex() {
         </div>
       )}
 
-      {/* Área de Gráficos/Info Mockada */}
-      {isVisible('chamados') && (
-        <div className="dashboard-card">
-          <div className="card-header">
-            <h2 className="card-title">Chamados Abertos</h2>
-          </div>
-          <div style={{ color: '#94a3b8', fontSize: 14 }}>
-            <p>Aqui teremos uma relação dos chamados abertos hoje, com seu status.</p>
-            <p style={{ marginTop: 12 }}>Aguarde em breve.</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

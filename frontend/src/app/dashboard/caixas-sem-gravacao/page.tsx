@@ -7,7 +7,6 @@ interface CaixaData {
   nome_empresa: string;
   data: string;
   turno: string | number;
-  usuario: string;
 }
 
 export default function CaixasSemGravacaoPage() {
@@ -97,7 +96,6 @@ export default function CaixasSemGravacaoPage() {
                 <th style={{ padding: '12px 10px', fontWeight: 'bold', borderRight: '1px solid #334155' }}>Empresa</th>
                 <th style={{ padding: '12px 10px', fontWeight: 'bold', borderRight: '1px solid #334155' }}>Data</th>
                 <th style={{ padding: '12px 10px', fontWeight: 'bold', borderRight: '1px solid #334155' }}>Turno</th>
-                <th style={{ padding: '12px 10px', fontWeight: 'bold' }}>Usuário</th>
               </tr>
             </thead>
             <tbody>
@@ -114,7 +112,6 @@ export default function CaixasSemGravacaoPage() {
                     <td style={{ padding: '10px', borderRight: '1px solid #334155' }}>{renderValue(row.nome_empresa)}</td>
                     <td style={{ padding: '10px', borderRight: '1px solid #334155' }}>{formattedData}</td>
                     <td style={{ padding: '10px', borderRight: '1px solid #334155' }}>{renderValue(row.turno)}</td>
-                    <td style={{ padding: '10px' }}>{renderValue(row.usuario)}</td>
                   </tr>
                 );
               })}

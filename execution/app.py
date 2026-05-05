@@ -669,7 +669,7 @@ def get_caixas_sem_gravacao():
             SELECT c.*, e.nome as nome_empresa 
             FROM caixa c 
             LEFT JOIN empresa e ON c.empresa = e.grid 
-            WHERE c.conferencia IS NULL
+            WHERE c.conferencia IS NULL AND c.data < CURRENT_DATE
             ORDER BY c.data DESC, c.turno ASC
         """)
         
