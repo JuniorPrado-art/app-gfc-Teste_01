@@ -169,6 +169,16 @@ export default function DashboardLayout({
             </div>
           )}
 
+          {isGroupVisible(['caixas_sem_gravacao', 'descontos_concedidos', 'estoque_critico', 'exclusoes']) && (
+            <div className="menu-group">
+              <h3 className="menu-title">Observações</h3>
+              {renderMenuItem('Caixas Sem Gravação', null, '/dashboard/caixas-sem-gravacao', 'caixas_sem_gravacao')}
+              {renderMenuItem('Descontos Concedidos', null, '/dashboard/descontos', 'descontos_concedidos')}
+              {renderMenuItem('Estoque Crítico / Mínimos', null, '/dashboard/estoque', 'estoque_critico')}
+              {renderMenuItem('Exclusões', null, '/dashboard/exclusoes', 'exclusoes')}
+            </div>
+          )}
+
           {isGroupVisible(['dre', 'custo_medio']) && (
             <div className="menu-group">
               <h3 className="menu-title">Relatórios</h3>

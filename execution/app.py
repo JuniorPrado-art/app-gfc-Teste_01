@@ -639,6 +639,64 @@ def get_sincronia():
     except Exception as e:
         return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
 
+@app.route('/api/monitoramento/caixas_sem_gravacao', methods=['GET'])
+def get_caixas_sem_gravacao():
+    """
+    Monitoramento de Caixas sem Gravação.
+    Recebe o 'cliente' via Query String e busca os registros na tabela 'caixa'
+    onde 'conferencia' é nulo. Faz join com a tabela 'empresa' para exibir o nome fantasia.
+    """
+    alias = request.args.get('cliente')
+    if not alias:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    config = load_client_config(alias)
+    if not config:
+        return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
+
+    try:
+        conn = psycopg2.connect(
+            host=config['host'],
+            port=config.get('port', 5432),
+            database=config['database'],
+            user=config['user'],
+            password=config['password'],
+            connect_timeout=20
+        )
+        conn.set_client_encoding('WIN1252')
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT c.*, e.nome as nome_empresa 
+            FROM caixa c 
+            LEFT JOIN empresa e ON c.empresa = e.grid 
+            WHERE c.conferencia IS NULL
+            ORDER BY c.data DESC, c.turno ASC
+        """)
+        
+        columns = [desc[0] for desc in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            row_dict = dict(zip(columns, row))
+            for k, v in row_dict.items():
+                if isinstance(v, datetime.datetime) or isinstance(v, datetime.date):
+                    row_dict[k] = v.strftime("%Y-%m-%d %H:%M:%S")
+                elif hasattr(v, 'quantize') or type(v).__name__ == 'Decimal':
+                    row_dict[k] = float(v)
+            results.append(row_dict)
+            
+        cursor.close()
+        conn.close()
+
+        return jsonify({"status": "success", "data": results})
+        
+    except psycopg2.Error as e:
+        error_msg = str(e).lower()
+        if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
+            return jsonify({"status": "error", "message": "Não houve resposta do Banco de Dados. Acione o suporte"}), 500
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": "Não foi possível validar as informações do Banco de Dados. Acione o suporte"}), 500
+
 
 def send_telegram_alert(mensagem, cliente_alias):
     cfg = load_client_config(cliente_alias)

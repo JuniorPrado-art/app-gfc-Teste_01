@@ -6,6 +6,7 @@ export default function DashboardIndex() {
   const [config, setConfig] = useState<any>(null);
   const [sincroniaCount, setSincroniaCount] = useState<number | null | 'timeout'>(null);
   const [prevendasCount, setPrevendasCount] = useState<number | null | 'timeout'>(null);
+  const [caixasCount, setCaixasCount] = useState<number | null>(null);
   const [role, setRole] = useState<string>('');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
 
@@ -81,8 +82,22 @@ export default function DashboardIndex() {
         .catch(err => console.error("Erro ao carregar status das pré-vendas"));
     };
 
+    // Monitoramento de Caixas Sem Gravação
+    const fetchCaixas = () => {
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/caixas_sem_gravacao?cliente=${cliente}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.status === 'success' && data.data) {
+            setCaixasCount(data.data.length);
+          }
+        })
+        .catch(err => console.error("Erro ao carregar caixas sem gravação"));
+    };
+
     fetchSincronia();
     fetchPrevendas();
+    fetchCaixas();
   }, []);
 
   const isVisible = (key: string) => {
@@ -136,6 +151,31 @@ export default function DashboardIndex() {
           </a>
         )}
       </div>
+
+      {/* Bloco de Observações */}
+      {(isVisible('caixas_sem_gravacao') || isVisible('descontos_concedidos') || isVisible('estoque_critico') || isVisible('exclusoes')) && (
+        <div className="dashboard-card" style={{ marginBottom: '24px' }}>
+          <div className="card-header">
+            <h2 className="card-title" style={{ fontSize: '18px', fontWeight: 'bold' }}>Observações:</h2>
+          </div>
+          <div style={{ color: '#94a3b8', fontSize: 14, lineHeight: '1.6' }}>
+            {isVisible('caixas_sem_gravacao') && (
+              <p>
+                - <a href="/dashboard/caixas-sem-gravacao" style={{ color: 'inherit', textDecoration: 'none' }}>Caixas sem gravação: {caixasCount !== null ? caixasCount : '...'} caixas</a>
+              </p>
+            )}
+            
+            {(isVisible('descontos_concedidos') || isVisible('estoque_critico') || isVisible('exclusoes')) && (
+              <div style={{ marginTop: '12px' }}>
+                <p>Em breve:</p>
+                {isVisible('descontos_concedidos') && <p>- Descontos concedidos</p>}
+                {isVisible('estoque_critico') && <p>- Estoque crítico e mínimo atingidos</p>}
+                {isVisible('exclusoes') && <p>- Exclusões</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Área de Gráficos/Info Mockada */}
       {isVisible('chamados') && (
