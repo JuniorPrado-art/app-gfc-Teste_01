@@ -152,25 +152,38 @@ export default function DashboardIndex() {
         )}
       </div>
 
-      {/* Bloco de Observações */}
+      {/* Bloco de Avisos Importantes */}
       {(isVisible('caixas_sem_gravacao') || isVisible('descontos_concedidos') || isVisible('estoque_critico') || isVisible('exclusoes')) && (
         <div className="dashboard-card" style={{ marginBottom: '24px' }}>
-          <div className="card-header">
-            <h2 className="card-title" style={{ fontSize: '18px', fontWeight: 'bold' }}>Observações:</h2>
+          <div className="card-header" style={{ justifyContent: 'center' }}>
+            <h2 className="title-primary" style={{ textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>Avisos Importantes</h2>
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 14, lineHeight: '1.6' }}>
+          
+          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {isVisible('caixas_sem_gravacao') && (
-              <p>
-                - <a href="/dashboard/caixas-sem-gravacao" style={{ color: 'inherit', textDecoration: 'none' }}>Caixas sem gravação: {caixasCount !== null ? caixasCount : '...'} caixas</a>
-              </p>
+              <a href="/dashboard/caixas-sem-gravacao" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div className="stat-label" style={{ marginBottom: '8px' }}>Caixas sem gravação</div>
+                <div className="stat-value" style={{ color: '#94a3b8', fontSize: '14px' }}>
+                  {caixasCount !== null ? `${caixasCount} caixas` : '...'}
+                </div>
+              </a>
             )}
             
-            {(isVisible('descontos_concedidos') || isVisible('estoque_critico') || isVisible('exclusoes')) && (
-              <div style={{ marginTop: '12px' }}>
-                <p>Em breve:</p>
-                {isVisible('descontos_concedidos') && <p>- Descontos concedidos</p>}
-                {isVisible('estoque_critico') && <p>- Estoque crítico e mínimo atingidos</p>}
-                {isVisible('exclusoes') && <p>- Exclusões</p>}
+            {isVisible('estoque_critico') && (
+              <div className="stat-box" style={{ opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div className="stat-label">Estoque crítico e mínimo atingidos</div>
+              </div>
+            )}
+
+            {isVisible('descontos_concedidos') && (
+              <div className="stat-box" style={{ opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div className="stat-label">Descontos concedidos</div>
+              </div>
+            )}
+
+            {isVisible('exclusoes') && (
+              <div className="stat-box" style={{ opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div className="stat-label">Exclusões</div>
               </div>
             )}
           </div>

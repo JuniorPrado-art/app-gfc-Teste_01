@@ -62,7 +62,7 @@ export default function DashboardLayout({
 
   }, []);
 
-  
+
   // Função que inscreve o navegador do usuário no servidor para receber Push Notifications nativas.
   // Ela busca a Chave Pública VAPID cadastrada para esse Cliente no servidor, gera uma inscrição
   // criptografada e envia para a rota POST /api/notifications/subscribe.
@@ -115,7 +115,7 @@ export default function DashboardLayout({
   const renderMenuItem = (label: React.ReactNode, icon: React.ReactNode, path: string, key: string) => {
     // Se for cliente e foi ocultado pelo Admin, não renderiza
     if (role !== 'admin' && visibility[key] === false) return null;
-    
+
     return (
       <div style={{ position: 'relative', marginBottom: '4px' }}>
         <Link href={path} className={`menu-item ${isActive(path)}`}>
@@ -123,12 +123,12 @@ export default function DashboardLayout({
           {label}
         </Link>
         {role === 'admin' && (
-          <span 
-            onClick={(e) => toggleVisibility(key, e)} 
-            style={{ 
-              position: 'absolute', right: '12px', top: '10px', cursor: 'pointer', 
-              fontSize: '10px', padding: '2px 6px', 
-              background: visibility[key] === false ? 'rgba(239, 68, 68, 0.8)' : 'rgba(100, 116, 139, 0.5)', 
+          <span
+            onClick={(e) => toggleVisibility(key, e)}
+            style={{
+              position: 'absolute', right: '12px', top: '10px', cursor: 'pointer',
+              fontSize: '10px', padding: '2px 6px',
+              background: visibility[key] === false ? 'rgba(239, 68, 68, 0.8)' : 'rgba(100, 116, 139, 0.5)',
               borderRadius: '4px', color: 'white'
             }}
           >
@@ -146,7 +146,7 @@ export default function DashboardLayout({
 
   return (
     <div className="dashboard-layout fade-in">
-      
+
       {/* Sidebar Inteligente Premium */}
       <aside className="sidebar">
         <div className="sidebar-logo" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginBottom: '32px' }}>
@@ -155,23 +155,23 @@ export default function DashboardLayout({
             <div style={{ fontSize: '20px', fontWeight: 700, color: 'white' }}>Painel GFC</div>
           </Link>
           <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.4', paddingLeft: '4px' }}>
-            Gerenciador de<br/>Ferramentas Customizadas
+            Gerenciador de<br />Ferramentas Customizadas
           </div>
         </div>
 
         <nav style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
-          
+
           {isGroupVisible(['prevendas', 'sincronia']) && (
             <div className="menu-group">
               <h3 className="menu-title">Monitoramento</h3>
-              {renderMenuItem('Pré-vendas', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, '/dashboard/pre-vendas', 'prevendas')}
-              {renderMenuItem('Sincronia', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>, '/dashboard/sincronia', 'sincronia')}
+              {renderMenuItem('Pré-vendas', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>, '/dashboard/pre-vendas', 'prevendas')}
+              {renderMenuItem('Sincronia', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" /></svg>, '/dashboard/sincronia', 'sincronia')}
             </div>
           )}
 
           {isGroupVisible(['caixas_sem_gravacao', 'descontos_concedidos', 'estoque_critico', 'exclusoes']) && (
             <div className="menu-group">
-              <h3 className="menu-title">Observações</h3>
+              <h3 className="menu-title">Avisos Importantes</h3>
               {renderMenuItem('Caixas Sem Gravação', null, '/dashboard/caixas-sem-gravacao', 'caixas_sem_gravacao')}
               {renderMenuItem('Descontos Concedidos', null, '/dashboard/descontos', 'descontos_concedidos')}
               {renderMenuItem('Estoque Crítico / Mínimos', null, '/dashboard/estoque', 'estoque_critico')}
@@ -185,17 +185,17 @@ export default function DashboardLayout({
               {renderMenuItem(
                 <div style={{ display: 'block', lineHeight: '1.2' }}>
                   <div style={{ fontSize: '13px' }}>Transações - POS</div>
-                </div>, 
-                null, 
-                '/dashboard/transacoes-pos', 
+                </div>,
+                null,
+                '/dashboard/transacoes-pos',
                 'dre'
               )}
               {renderMenuItem(
                 <div style={{ display: 'block', lineHeight: '1.2', marginTop: '8px' }}>
                   <div style={{ fontSize: '13px' }}>Transações - Possíveis Duplicadas</div>
-                </div>, 
-                null, 
-                '/dashboard/transacoes-duplicadas', 
+                </div>,
+                null,
+                '/dashboard/transacoes-duplicadas',
                 'custo_medio'
               )}
             </div>
@@ -204,7 +204,7 @@ export default function DashboardLayout({
           {isGroupVisible(['chamados']) && (
             <div className="menu-group">
               <h3 className="menu-title">Suporte e Chamados</h3>
-              {renderMenuItem('Chamados Abertos', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, '/dashboard/chamados', 'chamados')}
+              {renderMenuItem('Chamados Abertos', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>, '/dashboard/chamados', 'chamados')}
             </div>
           )}
 
@@ -218,25 +218,25 @@ export default function DashboardLayout({
                 Banco de Dados
               </Link> */}
               <Link href="/dashboard/configuracoes/email" className={`menu-item ${isActive('/configuracoes/email')}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                 Conf. Email Aplicativo
               </Link>
               <Link href="/dashboard/configuracoes/clientes" className={`menu-item ${isActive('/configuracoes/clientes')}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 Cadastro de Banco de Cliente
               </Link>
               <Link href="/dashboard/configuracoes/usuarios" className={`menu-item ${isActive('/configuracoes/usuarios')}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 Cadastro de Usuário de Cliente
               </Link>
             </div>
           )}
         </nav>
 
-        
+
         {pushPermission === 'default' && (
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <button 
+            <button
               onClick={requestNotificationPermission}
               style={{ background: '#3b82f6', border: 'none', borderRadius: '4px', padding: '6px 12px', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
             >
@@ -248,9 +248,9 @@ export default function DashboardLayout({
         <div style={{ marginTop: 'auto', padding: '12px 12px 0 12px', textAlign: 'center', color: '#cbd5e1', fontSize: '12px', fontWeight: 600 }}>
           Olá, {user}
         </div>
-        
+
         <div style={{ textAlign: 'center', marginTop: '4px', marginBottom: '8px' }}>
-          <button 
+          <button
             onClick={() => window.location.href = '/dashboard/alterar-senha'}
             style={{ background: 'transparent', border: '1px solid #334155', borderRadius: '4px', padding: '4px 8px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer', transition: 'background 0.2s' }}
             onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
@@ -260,15 +260,15 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        <a 
-          href="https://comercialinformatica.com/" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          style={{ 
-            display: 'block', 
-            color: '#64748b', 
-            fontSize: '11px', 
-            textDecoration: 'none', 
+        <a
+          href="https://comercialinformatica.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'block',
+            color: '#64748b',
+            fontSize: '11px',
+            textDecoration: 'none',
             padding: '4px 12px 12px 12px',
             transition: 'color 0.2s',
             textAlign: 'center'
@@ -276,18 +276,18 @@ export default function DashboardLayout({
         >
           Comercial Informática
         </a>
-        
+
         <div style={{ textAlign: 'center', marginBottom: '8px', color: '#64748b', fontSize: '10px' }}>
           Versão {pkg.version}
         </div>
 
         <div style={{ padding: '16px 0', borderTop: '1px solid var(--glass-border)' }}>
-          <button 
+          <button
             onClick={() => { localStorage.removeItem('gfc_role'); window.location.href = '/login'; }}
-            className="menu-item" 
+            className="menu-item"
             style={{ color: '#ef4444', width: '100%', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit' }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
             Sair
           </button>
         </div>
@@ -297,7 +297,7 @@ export default function DashboardLayout({
       <main className="dashboard-main">
         {children}
       </main>
-      
+
     </div>
   );
 }
