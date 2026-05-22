@@ -1503,14 +1503,14 @@ def get_estoque_combustivel():
                 -- Alerta se o estoque acabar em 4 dias ou menos
                 CASE
                     WHEN ea.estoque IS NULL
-                        THEN '⚠️ SEM REGISTRO DE ESTOQUE'
+                        THEN 'SEM REGISTRO DE ESTOQUE'
                     WHEN mc.media_diaria_litros = 0 OR mc.media_diaria_litros IS NULL
-                        THEN '⚠️ SEM MÉDIA DE VENDA'
+                        THEN 'SEM MEDIA DE VENDA'
                     WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 4
-                        THEN '🔴 CRÍTICO - ABASTECIMENTO URGENTE'
+                        THEN 'CRITICO - ABASTECIMENTO URGENTE'
                     WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 7
-                        THEN '🟡 ATENÇÃO - ESTOQUE BAIXO'
-                    ELSE '🟢 ESTOQUE OK'
+                        THEN 'ATENCAO - ESTOQUE BAIXO'
+                    ELSE 'ESTOQUE OK'
                 END AS alerta
 
             FROM media_calculada mc

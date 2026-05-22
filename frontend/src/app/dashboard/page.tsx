@@ -7,6 +7,7 @@ export default function DashboardIndex() {
   const [sincroniaCount, setSincroniaCount] = useState<number | null | 'timeout'>(null);
   const [prevendasCount, setPrevendasCount] = useState<number | null | 'timeout'>(null);
   const [caixasCount, setCaixasCount] = useState<number | null>(null);
+  const [estoqueCriticoCount, setEstoqueCriticoCount] = useState<number | null>(null);
   const [role, setRole] = useState<string>('');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
 
@@ -95,9 +96,24 @@ export default function DashboardIndex() {
         .catch(err => console.error("Erro ao carregar caixas sem gravação"));
     };
 
+    // Monitoramento de Controle de Estoque
+    const fetchEstoque = () => {
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/estoque?cliente=${cliente}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.status === 'success' && data.data) {
+            const criticos = data.data.filter((item: any) => item.alerta && item.alerta.includes('CRITICO')).length;
+            setEstoqueCriticoCount(criticos);
+          }
+        })
+        .catch(err => console.error("Erro ao carregar status do estoque"));
+    };
+
     fetchSincronia();
     fetchPrevendas();
     fetchCaixas();
+    fetchEstoque();
   }, []);
 
   const isVisible = (key: string) => {
@@ -170,9 +186,12 @@ export default function DashboardIndex() {
             )}
             
             {isVisible('estoque_critico') && (
-              <div className="stat-box" style={{ opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                <div className="stat-label">Estoque crítico e mínimo atingidos</div>
-              </div>
+              <a href="/dashboard/estoque?filtro=critico" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div className="stat-label" style={{ marginBottom: '8px' }}>Estoque crítico de combustível</div>
+                <div className="stat-value" style={{ color: estoqueCriticoCount && estoqueCriticoCount > 0 ? '#ef4444' : '#94a3b8', fontSize: '14px' }}>
+                  {estoqueCriticoCount !== null ? `${estoqueCriticoCount} crítico${estoqueCriticoCount !== 1 ? 's' : ''}` : '...'}
+                </div>
+              </a>
             )}
 
             {isVisible('descontos_concedidos') && (

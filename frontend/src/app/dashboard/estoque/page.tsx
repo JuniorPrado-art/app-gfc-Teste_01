@@ -31,17 +31,17 @@ export default function ControleEstoqueCombustivelPage() {
           return;
         }
 
-        const json = await res.json();
+        const json = await res.ok ? await res.json() : null;
         
-        if (res.ok && json.status === 'success') {
+        if (res.ok && json && json.status === 'success') {
           setRecords(json.data || []);
           setError(null);
-        } else if (json.status === 'timeout') {
+        } else if (json && json.status === 'timeout') {
           setError('Aguarde um momento, a conexão do banco está demorando um pouco mais do que o normal. Tentando novamente...');
           setTimeout(fetchData, 15000);
           return;
         } else {
-          setError(json.message || 'Erro ao carregar os dados de estoque.');
+          setError(json?.message || 'Erro ao carregar os dados de estoque.');
         }
       } catch (err) {
         setError('Não foi possível conectar ao servidor local do GFC.');
@@ -49,6 +49,18 @@ export default function ControleEstoqueCombustivelPage() {
         setLoading(false);
       }
     }
+    
+    // Ler o parâmetro 'filtro' da URL
+    const params = new URLSearchParams(window.location.search);
+    const filtroUrl = params.get('filtro');
+    if (filtroUrl) {
+      const filtroUpper = filtroUrl.toUpperCase();
+      if (filtroUpper === 'CRITICO') setSelectedAlerta('CRITICO');
+      else if (filtroUpper === 'ATENCAO') setSelectedAlerta('ATENCAO');
+      else if (filtroUpper === 'OK') setSelectedAlerta('OK');
+      else if (filtroUpper === 'SEM_REGISTRO') setSelectedAlerta('SEM_REGISTRO');
+    }
+
     fetchData();
   }, []);
 
@@ -82,8 +94,18 @@ export default function ControleEstoqueCombustivelPage() {
     }
   };
 
+  const formatAlerta = (alerta: string) => {
+    if (!alerta) return '';
+    if (alerta.includes('CRITICO')) return '🔴 CRÍTICO - ABASTECIMENTO URGENTE';
+    if (alerta.includes('ATENCAO')) return '🟡 ATENÇÃO - ESTOQUE BAIXO';
+    if (alerta.includes('ESTOQUE OK')) return '🟢 ESTOQUE OK';
+    if (alerta.includes('SEM REGISTRO')) return '⚠️ SEM REGISTRO DE ESTOQUE';
+    if (alerta.includes('SEM MEDIA')) return '⚠️ SEM MÉDIA DE VENDA';
+    return alerta;
+  };
+
   const getAlertaBadgeStyle = (alerta: string) => {
-    if (alerta.includes('CRÍTICO')) {
+    if (alerta.includes('CRITICO')) {
       return {
         background: 'rgba(239, 68, 68, 0.15)',
         color: '#fca5a5',
@@ -97,7 +119,7 @@ export default function ControleEstoqueCombustivelPage() {
         gap: '6px'
       };
     }
-    if (alerta.includes('ATENÇÃO')) {
+    if (alerta.includes('ATENCAO')) {
       return {
         background: 'rgba(234, 179, 8, 0.15)',
         color: '#fef08a',
@@ -145,15 +167,15 @@ export default function ControleEstoqueCombustivelPage() {
       row.produto_nome.toLowerCase().includes(search.toLowerCase());
     
     if (selectedAlerta === 'TODOS') return matchesSearch;
-    if (selectedAlerta === 'CRITICO') return matchesSearch && row.alerta.includes('CRÍTICO');
-    if (selectedAlerta === 'ATENCAO') return matchesSearch && row.alerta.includes('ATENÇÃO');
+    if (selectedAlerta === 'CRITICO') return matchesSearch && row.alerta.includes('CRITICO');
+    if (selectedAlerta === 'ATENCAO') return matchesSearch && row.alerta.includes('ATENCAO');
     if (selectedAlerta === 'OK') return matchesSearch && row.alerta.includes('OK');
-    if (selectedAlerta === 'SEM_REGISTRO') return matchesSearch && (row.alerta.includes('SEM REGISTRO') || row.alerta.includes('SEM MÉDIA'));
+    if (selectedAlerta === 'SEM_REGISTRO') return matchesSearch && (row.alerta.includes('REGISTRO') || row.alerta.includes('MEDIA'));
     return matchesSearch;
   });
 
-  const countCritico = records.filter(r => r.alerta.includes('CRÍTICO')).length;
-  const countAtencao = records.filter(r => r.alerta.includes('ATENÇÃO')).length;
+  const countCritico = records.filter(r => r.alerta.includes('CRITICO')).length;
+  const countAtencao = records.filter(r => r.alerta.includes('ATENCAO')).length;
   const countOk = records.filter(r => r.alerta.includes('OK')).length;
 
   if (loading) {
@@ -387,9 +409,9 @@ export default function ControleEstoqueCombustivelPage() {
               {filteredRecords.map((row, idx) => {
                 
                 let rowBg = idx % 2 === 0 ? 'transparent' : 'rgba(30, 41, 59, 0.2)';
-                if (row.alerta.includes('CRÍTICO')) {
+                if (row.alerta.includes('CRITICO')) {
                   rowBg = 'rgba(239, 68, 68, 0.04)';
-                } else if (row.alerta.includes('ATENÇÃO')) {
+                } else if (row.alerta.includes('ATENCAO')) {
                   rowBg = 'rgba(234, 179, 8, 0.02)';
                 }
 
@@ -417,19 +439,19 @@ export default function ControleEstoqueCombustivelPage() {
                     </td>
                     
                     {/* Estoque Atual */}
-                    <td style={{ padding: '14px 12px', borderRight: '1px solid #334155', textAlign: 'right', fontFamily: 'monospace', fontSize: '14px', fontWeight: 600, color: row.alerta.includes('CRÍTICO') ? '#ef4444' : '#f8fafc' }}>
+                    <td style={{ padding: '14px 12px', borderRight: '1px solid #334155', textAlign: 'right', fontFamily: 'monospace', fontSize: '14px', fontWeight: 600, color: row.alerta.includes('CRITICO') ? '#ef4444' : '#f8fafc' }}>
                       {formatNumber(row.estoque_atual)}
                     </td>
                     
                     {/* Dias Restantes */}
-                    <td style={{ padding: '14px 12px', borderRight: '1px solid #334155', textAlign: 'center', fontWeight: 'bold', fontSize: '14px', color: row.alerta.includes('CRÍTICO') ? '#fca5a5' : row.alerta.includes('ATENÇÃO') ? '#fef08a' : '#bbf7d0' }}>
+                    <td style={{ padding: '14px 12px', borderRight: '1px solid #334155', textAlign: 'center', fontWeight: 'bold', fontSize: '14px', color: row.alerta.includes('CRITICO') ? '#fca5a5' : row.alerta.includes('ATENCAO') ? '#fef08a' : '#bbf7d0' }}>
                       {formatDays(row.dias_restantes)}
                     </td>
                     
                     {/* Alerta */}
                     <td style={{ padding: '14px 12px', borderRight: '1px solid #334155', textAlign: 'center' }}>
                       <span style={getAlertaBadgeStyle(row.alerta)}>
-                        {row.alerta}
+                        {formatAlerta(row.alerta)}
                       </span>
                     </td>
                     
