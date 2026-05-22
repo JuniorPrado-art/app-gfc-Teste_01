@@ -243,7 +243,7 @@ export default function ControleEstoqueCombustivelPage() {
           boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.15)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px' }}>🚨 Críticos (≤ 4 dias)</span>
+            <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px' }}>🚨 Críticos (≤ 2 dias)</span>
             <span style={{ background: '#ef4444', color: 'white', fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '10px' }}>Alerta</span>
           </div>
           <div style={{ fontSize: '32px', fontWeight: 700, color: '#fca5a5' }}>{countCritico}</div>
@@ -257,7 +257,7 @@ export default function ControleEstoqueCombustivelPage() {
           boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.15)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ color: '#eab308', fontWeight: 600, fontSize: '14px' }}>⚠️ Atenção (≤ 7 dias)</span>
+            <span style={{ color: '#eab308', fontWeight: 600, fontSize: '14px' }}>⚠️ Atenção (≤ 4 dias)</span>
             <span style={{ background: '#eab308', color: 'black', fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '10px' }}>Baixo</span>
           </div>
           <div style={{ fontSize: '32px', fontWeight: 700, color: '#fef08a' }}>{countAtencao}</div>

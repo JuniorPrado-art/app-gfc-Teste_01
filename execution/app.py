@@ -1500,15 +1500,15 @@ def get_estoque_combustivel():
                 -- Quantos dias o estoque aguentará com base na média diária
                 ROUND((ea.estoque / NULLIF(mc.media_diaria_litros, 0))::numeric, 1) AS dias_restantes,
 
-                -- Alerta se o estoque acabar em 4 dias ou menos
+                -- Alerta se o estoque acabar em dias criticos ou de atencao
                 CASE
                     WHEN ea.estoque IS NULL
                         THEN 'SEM REGISTRO DE ESTOQUE'
                     WHEN mc.media_diaria_litros = 0 OR mc.media_diaria_litros IS NULL
                         THEN 'SEM MEDIA DE VENDA'
-                    WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 4
+                    WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 2
                         THEN 'CRITICO - ABASTECIMENTO URGENTE'
-                    WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 7
+                    WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 4
                         THEN 'ATENCAO - ESTOQUE BAIXO'
                     ELSE 'ESTOQUE OK'
                 END AS alerta
