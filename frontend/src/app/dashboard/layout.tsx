@@ -174,7 +174,7 @@ export default function DashboardLayout({
               <h3 className="menu-title">Avisos Importantes</h3>
               {renderMenuItem('Caixas Sem Gravação', null, '/dashboard/caixas-sem-gravacao', 'caixas_sem_gravacao')}
               {renderMenuItem('Descontos Concedidos', null, '/dashboard/descontos', 'descontos_concedidos')}
-              {renderMenuItem('Estoque Crítico / Mínimos', null, '/dashboard/estoque', 'estoque_critico')}
+              {renderMenuItem('Controle Estoque Combustivel', null, '/dashboard/estoque', 'estoque_critico')}
               {renderMenuItem('Exclusões', null, '/dashboard/exclusoes', 'exclusoes')}
             </div>
           )}

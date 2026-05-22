@@ -1396,6 +1396,159 @@ def toggle_rotina():
 #     except Exception as e:
 #         return jsonify({"status": "error", "message": f"Erro de banco: {str(e)}"}), 500
 # 
-# if __name__ == '__main__':
+
+@app.route('/api/monitoramento/estoque', methods=['GET'])
+def get_estoque_combustivel():
+    """
+    Monitoramento de Controle de Estoque de Combustível.
+    Recebe o 'cliente' via Query String e executa a consulta de estoque crítico e mínimo atingidos.
+    """
+    alias = request.args.get('cliente')
+    if not alias:
+        return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    config = load_client_config(alias)
+    if not config:
+        return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
+
+    try:
+        conn = psycopg2.connect(
+            host=config['host'],
+            port=config.get('port', 5432),
+            database=config['database'],
+            user=config['user'],
+            password=config['password'],
+            connect_timeout=20
+        )
+        conn.set_client_encoding('WIN1252')
+        cursor = conn.cursor()
+        
+        query = """
+            WITH grupo_combustivel AS (
+                SELECT grid
+                FROM grupo_produto
+                WHERE nome ILIKE '%COMBUSTIV%'
+            ),
+
+            produtos_combustivel AS (
+                SELECT
+                    p.grid,
+                    p.nome AS produto_nome
+                FROM produto p
+                INNER JOIN grupo_combustivel gc ON gc.grid = p.grupo
+            ),
+
+            vendas_mensais AS (
+                SELECT
+                    e.grid          AS empresa_grid,
+                    e.nome_reduzido AS empresa_nome,
+                    pc.grid         AS produto_grid,
+                    pc.produto_nome,
+                    DATE_TRUNC('month', l.data::date) AS mes,
+                    SUM(l.quantidade)                 AS total_litros_mes
+                FROM lancto l
+                INNER JOIN produtos_combustivel pc ON pc.grid = l.produto
+                INNER JOIN empresa e               ON e.grid  = l.empresa
+                WHERE l.quantidade > 0
+                  AND l.data >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '12 months'
+                GROUP BY
+                    e.grid,
+                    e.nome_reduzido,
+                    pc.grid,
+                    pc.produto_nome,
+                    DATE_TRUNC('month', l.data::date)
+            ),
+
+            media_calculada AS (
+                -- Calcula a média mensal e deriva a média diária
+                SELECT
+                    empresa_grid,
+                    empresa_nome,
+                    produto_grid,
+                    produto_nome,
+                    ROUND(AVG(total_litros_mes)::numeric, 2)        AS media_mensal_litros,
+                    ROUND((AVG(total_litros_mes) / 30)::numeric, 2) AS media_diaria_litros
+                FROM vendas_mensais
+                GROUP BY
+                    empresa_grid,
+                    empresa_nome,
+                    produto_grid,
+                    produto_nome
+            ),
+
+            estoque_atual AS (
+                -- Pega o registro de estoque mais recente por empresa e produto
+                SELECT DISTINCT ON (empresa, produto)
+                    empresa,
+                    produto,
+                    estoque,
+                    data AS data_estoque
+                FROM estoque_produto
+                ORDER BY
+                    empresa,
+                    produto,
+                    data DESC
+            )
+
+            SELECT
+                mc.empresa_nome,
+                mc.produto_nome,
+                mc.media_mensal_litros,
+                mc.media_diaria_litros,
+                ROUND(ea.estoque::numeric, 2)                                        AS estoque_atual,
+                ea.data_estoque,
+
+                -- Quantos dias o estoque aguentará com base na média diária
+                ROUND((ea.estoque / NULLIF(mc.media_diaria_litros, 0))::numeric, 1) AS dias_restantes,
+
+                -- Alerta se o estoque acabar em 4 dias ou menos
+                CASE
+                    WHEN ea.estoque IS NULL
+                        THEN '⚠️ SEM REGISTRO DE ESTOQUE'
+                    WHEN mc.media_diaria_litros = 0 OR mc.media_diaria_litros IS NULL
+                        THEN '⚠️ SEM MÉDIA DE VENDA'
+                    WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 4
+                        THEN '🔴 CRÍTICO - ABASTECIMENTO URGENTE'
+                    WHEN (ea.estoque / NULLIF(mc.media_diaria_litros, 0)) <= 7
+                        THEN '🟡 ATENÇÃO - ESTOQUE BAIXO'
+                    ELSE '🟢 ESTOQUE OK'
+                END AS alerta
+
+            FROM media_calculada mc
+            LEFT JOIN estoque_atual ea
+                   ON ea.empresa = mc.empresa_grid
+                  AND ea.produto  = mc.produto_grid
+            ORDER BY
+                -- Ordena pelos mais críticos primeiro
+                dias_restantes ASC NULLS FIRST,
+                mc.empresa_nome,
+                mc.produto_nome;
+        """
+        cursor.execute(query)
+        
+        columns = [desc[0] for desc in cursor.description]
+        results = []
+        for row in cursor.fetchall():
+            row_dict = dict(zip(columns, row))
+            for k, v in row_dict.items():
+                if isinstance(v, (datetime.datetime, datetime.date)):
+                    row_dict[k] = v.strftime("%Y-%m-%d %H:%M:%S")
+                elif hasattr(v, 'quantize') or type(v).__name__ == 'Decimal':
+                    row_dict[k] = float(v)
+            results.append(row_dict)
+            
+        cursor.close()
+        conn.close()
+
+        return jsonify({"status": "success", "data": results})
+        
+    except psycopg2.Error as e:
+        error_msg = str(e).lower()
+        if "timeout" in error_msg or "could not connect to server" in error_msg or "tempo limite" in error_msg:
+            return jsonify({"status": "error", "message": "Não houve resposta do Banco de Dados. Acione o suporte"}), 500
+        return jsonify({"status": "error", "message": f"Erro de banco: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Erro inesperado: {str(e)}"}), 500
+
+if __name__ == '__main__':
     # Roda o servidor de Agent/API local na porta 5000 em modo de desenvolvimento
     app.run(host='0.0.0.0', debug=True, port=5000)
