@@ -1459,6 +1459,19 @@ def get_estoque_combustivel():
                     DATE_TRUNC('month', l.data::date)
             ),
 
+            -- identifica quais empresa+produto tiveram venda no último mês
+            ativos_ultimo_mes AS (
+                SELECT DISTINCT
+                    e.grid AS empresa_grid,
+                    l.produto AS produto_grid
+                FROM lancto l
+                INNER JOIN produtos_combustivel pc ON pc.grid = l.produto
+                INNER JOIN empresa e               ON e.grid  = l.empresa
+                WHERE l.quantidade > 0
+                    AND l.operacao = 'V'
+                    AND l.data >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
+            ),
+
             media_calculada AS (
                 -- Calcula a média mensal e deriva a média diária
                 SELECT
@@ -1529,6 +1542,9 @@ def get_estoque_combustivel():
                 END AS alerta
 
             FROM media_calculada mc
+            INNER JOIN ativos_ultimo_mes aum
+                    ON aum.empresa_grid = mc.empresa_grid
+                   AND aum.produto_grid = mc.produto_grid
             LEFT JOIN estoque_atual ea
                    ON ea.empresa = mc.empresa_grid
                   AND ea.produto  = mc.produto_grid
