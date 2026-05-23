@@ -1449,6 +1449,7 @@ def get_estoque_combustivel():
                 INNER JOIN produtos_combustivel pc ON pc.grid = l.produto
                 INNER JOIN empresa e               ON e.grid  = l.empresa
                 WHERE l.quantidade > 0
+                    AND l.operacao = 'V'
                   AND l.data >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '12 months'
                 GROUP BY
                     e.grid,
