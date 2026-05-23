@@ -11,6 +11,7 @@ interface EstoqueData {
   data_estoque: string | null;
   dias_restantes: number | null;
   alerta: string;
+  quantidade_sugerida: number | null;
 }
 
 export default function ControleEstoqueCombustivelPage() {
@@ -71,7 +72,20 @@ export default function ControleEstoqueCombustivelPage() {
 
   const formatDays = (val: number | null | undefined) => {
     if (val === null || val === undefined) return '-';
-    return val.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + (val === 1 ? ' dia' : ' dias');
+    if (val <= 0) return '0 dias e 0 horas';
+    
+    let days = Math.floor(val);
+    let hours = Math.round((val - days) * 24);
+    
+    if (hours === 24) {
+      days += 1;
+      hours = 0;
+    }
+    
+    const daysStr = days === 1 ? '1 dia' : `${days} dias`;
+    const hoursStr = hours === 1 ? '1 hora' : `${hours} horas`;
+    
+    return `${daysStr} e ${hoursStr}`;
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -400,9 +414,13 @@ export default function ControleEstoqueCombustivelPage() {
                 <th style={{ padding: '16px 12px', fontWeight: 'bold', borderRight: '1px solid #334155', color: '#38bdf8', textAlign: 'right' }}>Média Mensal (L)</th>
                 <th style={{ padding: '16px 12px', fontWeight: 'bold', borderRight: '1px solid #334155', color: '#38bdf8', textAlign: 'right' }}>Média Diária (L)</th>
                 <th style={{ padding: '16px 12px', fontWeight: 'bold', borderRight: '1px solid #334155', color: '#38bdf8', textAlign: 'right' }}>Estoque Atual (L)</th>
-                <th style={{ padding: '16px 12px', fontWeight: 'bold', borderRight: '1px solid #334155', color: '#38bdf8', textAlign: 'center' }}>Dias Restantes</th>
+                <th style={{ padding: '16px 12px', fontWeight: 'bold', borderRight: '1px solid #334155', color: '#38bdf8', textAlign: 'center' }}>
+                  Dias Restantes <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>(estimativa)</span>
+                </th>
                 <th style={{ padding: '16px 12px', fontWeight: 'bold', borderRight: '1px solid #334155', color: '#38bdf8', textAlign: 'center' }}>Status / Alerta</th>
-                <th style={{ padding: '16px 12px', fontWeight: 'bold', color: '#38bdf8' }}>Última Leitura Estoque</th>
+                {selectedAlerta !== 'OK' && (
+                  <th style={{ padding: '16px 12px', fontWeight: 'bold', color: '#38bdf8', textAlign: 'right' }}>Quantidade Sugerida (L)</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -455,10 +473,14 @@ export default function ControleEstoqueCombustivelPage() {
                       </span>
                     </td>
                     
-                    {/* Última Leitura */}
-                    <td style={{ padding: '14px 12px', color: '#94a3b8', fontSize: '12px' }}>
-                      {formatDate(row.data_estoque)}
-                    </td>
+                    {/* Quantidade Sugerida */}
+                    {selectedAlerta !== 'OK' && (
+                      <td style={{ padding: '14px 12px', textAlign: 'right', fontFamily: 'monospace', fontSize: '14px', color: '#cbd5e1' }}>
+                        {row.quantidade_sugerida !== null && row.quantidade_sugerida !== undefined
+                          ? formatNumber(row.quantidade_sugerida)
+                          : '-'}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

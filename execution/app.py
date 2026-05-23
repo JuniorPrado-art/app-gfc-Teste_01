@@ -1450,7 +1450,7 @@ def get_estoque_combustivel():
                 INNER JOIN empresa e               ON e.grid  = l.empresa
                 WHERE l.quantidade > 0
                     AND l.operacao = 'V'
-                  AND l.data >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '12 months'
+                    AND l.data >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '12 months'
                 GROUP BY
                     e.grid,
                     e.nome_reduzido,
@@ -1497,6 +1497,20 @@ def get_estoque_combustivel():
                 mc.media_diaria_litros,
                 ROUND(ea.estoque::numeric, 2)                                        AS estoque_atual,
                 ea.data_estoque,
+
+                -- Litros sugeridos para alcançar o estoque seguro (4 dias de média diária)
+                CASE
+                    WHEN mc.media_diaria_litros IS NULL OR mc.media_diaria_litros = 0
+                        THEN NULL
+                    ELSE
+                        GREATEST(
+                            ROUND(
+                                ((mc.media_diaria_litros * 4) - COALESCE(ea.estoque, 0))::numeric,
+                                2
+                            ),
+                            0
+                        )
+                END AS quantidade_sugerida,
 
                 -- Quantos dias o estoque aguentará com base na média diária
                 ROUND((ea.estoque / NULLIF(mc.media_diaria_litros, 0))::numeric, 1) AS dias_restantes,
