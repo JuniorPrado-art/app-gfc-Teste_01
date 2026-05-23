@@ -302,3 +302,46 @@ body {
   color: white;
   margin-top: 4px;
 }
+
+/* Sidebar Grupo Colapsável por Hover e Ativo */
+.menu-group-collapsible {
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.menu-group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-group-collapsible:hover .menu-group-title {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.menu-group-collapsible.has-active-submenu .menu-group-title {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.submenu-list {
+  display: none;
+  padding-left: 8px;
+  margin-top: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  margin-left: 20px;
+}
+
+/* Mostrar submenus no hover ou se estiver ativo */
+.menu-group-collapsible:hover .submenu-list,
+.menu-group-collapsible.has-active-submenu .submenu-list {
+  display: block;
+}

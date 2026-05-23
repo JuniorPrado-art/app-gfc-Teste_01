@@ -144,6 +144,32 @@ export default function DashboardLayout({
     return keys.some(k => visibility[k] !== false); // Se ao menos 1 não for falso
   };
 
+  const renderMenuGroup = (
+    title: string,
+    icon: React.ReactNode,
+    subpaths: string[],
+    keys: string[],
+    childrenItems: React.ReactNode
+  ) => {
+    if (!isGroupVisible(keys) && keys.length > 0) return null;
+
+    const hasActive = subpaths.some(path => pathname === path || (path !== '/dashboard' && pathname?.startsWith(path)));
+
+    return (
+      <div className={`menu-group-collapsible ${hasActive ? 'has-active-submenu' : ''}`}>
+        <div className="menu-group-title">
+          {icon}
+          <span>{title}</span>
+        </div>
+        <div className="submenu-list">
+          {childrenItems}
+        </div>
+      </div>
+    );
+  };
+
+  const isSubPage = pathname !== '/dashboard' && pathname !== '/dashboard/';
+
   return (
     <div className="dashboard-layout fade-in">
 
@@ -161,62 +187,58 @@ export default function DashboardLayout({
 
         <nav style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
 
-          {isGroupVisible(['prevendas', 'sincronia']) && (
-            <div className="menu-group">
-              <h3 className="menu-title">Monitoramento</h3>
+          {renderMenuGroup(
+            'Monitoramento',
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+            ['/dashboard/pre-vendas', '/dashboard/sincronia'],
+            ['prevendas', 'sincronia'],
+            <>
               {renderMenuItem('Pré-vendas', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>, '/dashboard/pre-vendas', 'prevendas')}
               {renderMenuItem('Sincronia', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" /></svg>, '/dashboard/sincronia', 'sincronia')}
-            </div>
+            </>
           )}
 
-          {isGroupVisible(['caixas_sem_gravacao', 'descontos_concedidos', 'estoque_critico', 'exclusoes']) && (
-            <div className="menu-group">
-              <h3 className="menu-title">Avisos Importantes</h3>
+          {renderMenuGroup(
+            'Avisos Importantes',
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+            ['/dashboard/caixas-sem-gravacao', '/dashboard/descontos', '/dashboard/estoque', '/dashboard/exclusoes'],
+            ['caixas_sem_gravacao', 'descontos_concedidos', 'estoque_critico', 'exclusoes'],
+            <>
               {renderMenuItem('Caixas Sem Gravação', null, '/dashboard/caixas-sem-gravacao', 'caixas_sem_gravacao')}
               {renderMenuItem('Descontos Concedidos', null, '/dashboard/descontos', 'descontos_concedidos')}
               {renderMenuItem('Controle Estoque Combustivel', null, '/dashboard/estoque', 'estoque_critico')}
               {renderMenuItem('Exclusões', null, '/dashboard/exclusoes', 'exclusoes')}
-            </div>
+            </>
           )}
 
-          {isGroupVisible(['dre', 'custo_medio']) && (
-            <div className="menu-group">
-              <h3 className="menu-title">Relatórios</h3>
-              {renderMenuItem(
-                <div style={{ display: 'block', lineHeight: '1.2' }}>
-                  <div style={{ fontSize: '13px' }}>Transações - POS</div>
-                </div>,
-                null,
-                '/dashboard/transacoes-pos',
-                'dre'
-              )}
-              {renderMenuItem(
-                <div style={{ display: 'block', lineHeight: '1.2', marginTop: '8px' }}>
-                  <div style={{ fontSize: '13px' }}>Transações - Possíveis Duplicadas</div>
-                </div>,
-                null,
-                '/dashboard/transacoes-duplicadas',
-                'custo_medio'
-              )}
-            </div>
+          {renderMenuGroup(
+            'Relatórios',
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+            ['/dashboard/transacoes-pos', '/dashboard/transacoes-duplicadas'],
+            ['dre', 'custo_medio'],
+            <>
+              {renderMenuItem('Transações - POS', null, '/dashboard/transacoes-pos', 'dre')}
+              {renderMenuItem('Transações - Possíveis Duplicadas', null, '/dashboard/transacoes-duplicadas', 'custo_medio')}
+            </>
           )}
 
-          {isGroupVisible(['chamados']) && (
-            <div className="menu-group">
-              <h3 className="menu-title">Suporte e Chamados</h3>
+          {renderMenuGroup(
+            'Suporte e Chamados',
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
+            ['/dashboard/chamados'],
+            ['chamados'],
+            <>
               {renderMenuItem('Chamados Abertos', <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>, '/dashboard/chamados', 'chamados')}
-            </div>
+            </>
           )}
 
           {/* O Menu Configurações SEMPRE some para o Cliente. Só aparece se a Role for Admin. */}
-          {role === 'admin' && (
-            <div className="menu-group">
-              <h3 className="menu-title" style={{ color: '#fbbf24' }}>Configurações (Admin)</h3>
-              {/* Banco de Dados foi desativado/ocultado e agora faz parte de Clientes */}
-              {/* <Link href="/dashboard/configuracoes/banco" className={`menu-item ${isActive('/configuracoes/banco')}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-                Banco de Dados
-              </Link> */}
+          {role === 'admin' && renderMenuGroup(
+            'Configurações',
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0-1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+            ['/dashboard/configuracoes/email', '/dashboard/configuracoes/clientes', '/dashboard/configuracoes/usuarios'],
+            [],
+            <>
               <Link href="/dashboard/configuracoes/email" className={`menu-item ${isActive('/configuracoes/email')}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                 Conf. Email Aplicativo
@@ -229,7 +251,7 @@ export default function DashboardLayout({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 Cadastro de Usuário de Cliente
               </Link>
-            </div>
+            </>
           )}
         </nav>
 
@@ -295,6 +317,42 @@ export default function DashboardLayout({
 
       {/* Conteúdo Principal Dinâmico */}
       <main className="dashboard-main">
+        {isSubPage && (
+          <div style={{ marginBottom: '20px' }}>
+            <Link 
+              href="/dashboard" 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#94a3b8',
+                textDecoration: 'none',
+                fontSize: '13px',
+                fontWeight: 500,
+                background: 'rgba(30, 41, 59, 0.4)',
+                border: '1px solid #334155',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = '#38bdf8';
+                e.currentTarget.style.borderColor = '#38bdf8';
+                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.05)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = '#94a3b8';
+                e.currentTarget.style.borderColor = '#334155';
+                e.currentTarget.style.background = 'rgba(30, 41, 59, 0.4)';
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+              </svg>
+              Voltar para página principal
+            </Link>
+          </div>
+        )}
         {children}
       </main>
 
