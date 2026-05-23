@@ -1542,6 +1542,7 @@ def get_estoque_combustivel():
                 END AS alerta
 
             FROM media_calculada mc
+            -- Garante que só entram produtos com venda no último mês
             INNER JOIN ativos_ultimo_mes aum
                     ON aum.empresa_grid = mc.empresa_grid
                    AND aum.produto_grid = mc.produto_grid
