@@ -8,6 +8,8 @@ export default function DashboardIndex() {
   const [prevendasCount, setPrevendasCount] = useState<number | null | 'timeout'>(null);
   const [caixasCount, setCaixasCount] = useState<number | null>(null);
   const [estoqueCriticoCount, setEstoqueCriticoCount] = useState<number | null>(null);
+  const [contasPagarCount, setContasPagarCount] = useState<number | null>(null);
+  const [contasPagarTotal, setContasPagarTotal] = useState<number>(0);
   const [role, setRole] = useState<string>('');
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
 
@@ -110,10 +112,26 @@ export default function DashboardIndex() {
         .catch(err => console.error("Erro ao carregar status do estoque"));
     };
 
+    // Monitoramento de Contas a Pagar
+    const fetchContasPagar = () => {
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/monitoramento/contas_pagar?cliente=${cliente}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.status === 'success' && data.data) {
+            setContasPagarCount(data.data.length);
+            const total = data.data.reduce((acc: number, item: any) => acc + (item.valor || 0), 0);
+            setContasPagarTotal(total);
+          }
+        })
+        .catch(err => console.error("Erro ao carregar contas a pagar"));
+    };
+
     fetchSincronia();
     fetchPrevendas();
     fetchCaixas();
     fetchEstoque();
+    fetchContasPagar();
   }, []);
 
   const isVisible = (key: string) => {
@@ -169,7 +187,7 @@ export default function DashboardIndex() {
       </div>
 
       {/* Bloco de Avisos Importantes */}
-      {(isVisible('caixas_sem_gravacao') || isVisible('descontos_concedidos') || isVisible('estoque_critico') || isVisible('exclusoes')) && (
+      {(isVisible('caixas_sem_gravacao') || isVisible('contas_pagar') || isVisible('estoque_critico') || isVisible('exclusoes')) && (
         <div className="dashboard-card" style={{ marginBottom: '24px' }}>
           <div className="card-header" style={{ justifyContent: 'center' }}>
             <h2 className="title-primary" style={{ textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>Avisos Importantes</h2>
@@ -194,10 +212,13 @@ export default function DashboardIndex() {
               </a>
             )}
 
-            {isVisible('descontos_concedidos') && (
-              <div className="stat-box" style={{ opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                <div className="stat-label">Descontos concedidos</div>
-              </div>
+            {isVisible('contas_pagar') && (
+              <a href="/dashboard/contas-pagar" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                <div className="stat-label" style={{ marginBottom: '8px' }}>Contas a pagar (Hoje)</div>
+                <div className="stat-value" style={{ color: contasPagarCount && contasPagarCount > 0 ? '#ef4444' : '#94a3b8', fontSize: '14px', fontWeight: 'bold' }}>
+                  {contasPagarCount !== null ? `${contasPagarCount} contas (R$ ${contasPagarTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : '...'}
+                </div>
+              </a>
             )}
 
             {isVisible('exclusoes') && (
