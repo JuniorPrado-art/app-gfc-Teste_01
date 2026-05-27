@@ -1579,21 +1579,6 @@ def get_estoque_combustivel():
                     empresa_nome,
                     produto_grid,
                     produto_nome
-            ),
-
-            estoque_atual AS (
-                -- Pega o registro de estoque mais recente por empresa e produto (filtrando por combustível antes de ordenar)
-                SELECT DISTINCT ON (ep.empresa, ep.produto)
-                    ep.empresa,
-                    ep.produto,
-                    ep.estoque,
-                    ep.data AS data_estoque
-                FROM estoque_produto ep
-                INNER JOIN produtos_combustivel pc ON pc.grid = ep.produto
-                ORDER BY
-                    ep.empresa,
-                    ep.produto,
-                    ep.data DESC
             )
 
             SELECT
@@ -1639,9 +1624,17 @@ def get_estoque_combustivel():
             INNER JOIN ativos_ultimo_mes aum
                     ON aum.empresa_grid = mc.empresa_grid
                    AND aum.produto_grid = mc.produto_grid
-            LEFT JOIN estoque_atual ea
-                   ON ea.empresa = mc.empresa_grid
-                  AND ea.produto  = mc.produto_grid
+            
+            -- OTIMIZAÇÃO: Busca lateral baseada em índice para trazer o estoque mais recente de cada combustível ativo
+            LEFT JOIN LATERAL (
+                SELECT ep.estoque, ep.data AS data_estoque
+                FROM estoque_produto ep
+                WHERE ep.empresa = mc.empresa_grid
+                  AND ep.produto = mc.produto_grid
+                ORDER BY ep.data DESC
+                LIMIT 1
+            ) ea ON TRUE
+            
             ORDER BY
                 -- Ordena pelos mais críticos primeiro
                 dias_restantes ASC NULLS FIRST,
