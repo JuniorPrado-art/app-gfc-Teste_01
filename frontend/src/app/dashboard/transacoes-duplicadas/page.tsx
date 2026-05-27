@@ -34,11 +34,12 @@ export default function TransacoesDuplicadasPage() {
   const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/empresas`)
+    const cliente = localStorage.getItem('gfc_cliente') || '';
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/empresas?cliente=${cliente}`)
       .then(res => res.json())
       .then(json => {
-        if (json.status === 'success') {
-          setEmpresas(json.data);
+        if (json && json.status === 'success') {
+          setEmpresas(json.data || []);
         }
       })
       .catch(e => console.error("Erro carregando empresas:", e));
@@ -69,7 +70,8 @@ export default function TransacoesDuplicadasPage() {
     setResultados([]);
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/relatorios/transacoes-duplicadas`, {
+      const cliente = localStorage.getItem('gfc_cliente') || '';
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/relatorios/transacoes-duplicadas?cliente=${cliente}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
