@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 export default function DashboardIndex() {
-  const [config, setConfig] = useState<any>(null);
   const [sincroniaCount, setSincroniaCount] = useState<number | null | 'timeout'>(null);
   const [prevendasCount, setPrevendasCount] = useState<number | null | 'timeout'>(null);
   const [caixasCount, setCaixasCount] = useState<number | null>(null);
@@ -23,17 +22,6 @@ export default function DashboardIndex() {
       .then(data => setVisibility(data))
       .catch(e => console.error("Erro carregando permissões: ", e));
 
-    // [DESATIVADO] Busca de configurações globais. 
-    // Mantido apenas para não quebrar referências antigas no HTML.
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/load`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') {
-          setConfig(data.data);
-        }
-      })
-      .catch(err => console.error("Erro ao carregar dados locais"));
-      
     // Monitoramento da Sincronia:
     // Realiza um polling (requisição recorrente) a cada 15 segundos caso o servidor backend
     // retorne 504 (timeout) devido a conexões lentas do banco de dados do cliente.
@@ -144,7 +132,7 @@ export default function DashboardIndex() {
       <header style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 className="title-primary">
-            Visão Geral {config?.nome_base ? `- ${config.nome_base}` : ''}
+            Visão Geral
           </h1>
           <p className="text-muted" style={{ marginBottom: '4px' }}>Bem-vindo ao sistema GFC - Gerenciador de Ferramentas Customizadas</p>
         </div>
