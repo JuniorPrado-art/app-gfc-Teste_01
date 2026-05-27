@@ -45,7 +45,7 @@ def test_connection():
             database=db_name,
             user=db_user,
             password=db_pass,
-            connect_timeout=20
+            connect_timeout=10
         )
         conn.set_client_encoding('WIN1252')
         conn.close()
@@ -529,7 +529,7 @@ def get_prevendas():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=20
+            connect_timeout=5
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -592,7 +592,7 @@ def get_sincronia():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=20
+            connect_timeout=5
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -660,7 +660,7 @@ def get_caixas_sem_gravacao():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=20
+            connect_timeout=5
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -812,7 +812,7 @@ def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
             conn = psycopg2.connect(
                 host=config['host'], port=config.get('port', 5432),
                 database=config['database'], user=config['user'], password=config['password'],
-                connect_timeout=20
+                connect_timeout=5
             )
             conn.set_client_encoding('WIN1252')
             cursor = conn.cursor()
@@ -893,7 +893,7 @@ def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
             conn = psycopg2.connect(
                 host=config['host'], port=config.get('port', 5432),
                 database=config['database'], user=config['user'], password=config['password'],
-                connect_timeout=20
+                connect_timeout=5
             )
             conn.set_client_encoding('WIN1252')
             cursor = conn.cursor()
@@ -1417,7 +1417,7 @@ def get_contas_pagar():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=20
+            connect_timeout=5
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
@@ -1513,7 +1513,7 @@ def get_estoque_combustivel():
             database=config['database'],
             user=config['user'],
             password=config['password'],
-            connect_timeout=20
+            connect_timeout=5
         )
         conn.set_client_encoding('WIN1252')
         cursor = conn.cursor()
