@@ -1555,17 +1555,13 @@ def get_estoque_combustivel():
                     DATE_TRUNC('month', l.data::date)
             ),
 
-            -- identifica quais empresa+produto tiveram venda no último mês
+            -- identifica quais empresa+produto tiveram venda no último mês usando vendas_mensais (evita consultar lancto novamente)
             ativos_ultimo_mes AS (
                 SELECT DISTINCT
-                    e.grid AS empresa_grid,
-                    l.produto AS produto_grid
-                FROM lancto l
-                INNER JOIN produtos_combustivel pc ON pc.grid = l.produto
-                INNER JOIN empresa e               ON e.grid  = l.empresa
-                WHERE l.quantidade > 0
-                    AND l.operacao = 'V'
-                    AND l.data >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
+                    empresa_grid,
+                    produto_grid
+                FROM vendas_mensais
+                WHERE mes >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
             ),
 
             media_calculada AS (
@@ -1586,17 +1582,18 @@ def get_estoque_combustivel():
             ),
 
             estoque_atual AS (
-                -- Pega o registro de estoque mais recente por empresa e produto
-                SELECT DISTINCT ON (empresa, produto)
-                    empresa,
-                    produto,
-                    estoque,
-                    data AS data_estoque
-                FROM estoque_produto
+                -- Pega o registro de estoque mais recente por empresa e produto (filtrando por combustível antes de ordenar)
+                SELECT DISTINCT ON (ep.empresa, ep.produto)
+                    ep.empresa,
+                    ep.produto,
+                    ep.estoque,
+                    ep.data AS data_estoque
+                FROM estoque_produto ep
+                INNER JOIN produtos_combustivel pc ON pc.grid = ep.produto
                 ORDER BY
-                    empresa,
-                    produto,
-                    data DESC
+                    ep.empresa,
+                    ep.produto,
+                    ep.data DESC
             )
 
             SELECT
