@@ -1336,7 +1336,8 @@ def get_transacoes_pos():
             LEFT JOIN nota_fiscal nf ON (nf.mlid=m.mlid)
             LEFT JOIN empresa e ON (e.grid=m.empresa)
             WHERE mm.forma_pgto = 't'
-              AND mm.conta_debitar ILIKE '1.3.01%%'
+              AND mm.nome ILIKE '%%CARTAO%%'
+              AND mm.nome NOT LIKE '%%PARCELADO%%'
               AND NOT EXISTS (SELECT 1 FROM tef_transacao t WHERE t.movto = m.grid)
               AND m.data BETWEEN %s AND %s
               AND e.grid = %s
