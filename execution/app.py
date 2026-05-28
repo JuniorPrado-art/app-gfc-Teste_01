@@ -20,6 +20,30 @@ from pywebpush import webpush, WebPushException
 
 ALERT_STATE_FILE = 'alert_state.json'
 
+# ====================================================================================================
+# SISTEMA DE CACHE EM MEMÓRIA PARA MONITORAMENTO (RESOLUÇÃO DE TIMEOUTS WAN)
+# ====================================================================================================
+MONITORAMENTO_CACHE = {}
+
+def obter_dados_cache(chave_cache, expiracao_segundos=120):
+    """
+    Retorna os dados salvos em cache se a chave existir e o tempo não tiver expirado.
+    """
+    if chave_cache in MONITORAMENTO_CACHE:
+        entrada = MONITORAMENTO_CACHE[chave_cache]
+        if time.time() - entrada['timestamp'] < expiracao_segundos:
+            return entrada['data']
+    return None
+
+def definir_dados_cache(chave_cache, dados):
+    """
+    Salva os dados no dicionário global de cache com o timestamp atual.
+    """
+    MONITORAMENTO_CACHE[chave_cache] = {
+        'data': dados,
+        'timestamp': time.time()
+    }
+
 app = Flask(__name__)
 # Habilitando CORS para permitir conexões do Frontend do Next.js (rodando em http://localhost:3000)
 CORS(app)
@@ -518,6 +542,14 @@ def get_prevendas():
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    
+    nocache = request.args.get('nocache', 'false').lower() == 'true'
+    cache_key = f"prevendas_{alias}"
+    if not nocache:
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        if cached_data is not None:
+            return jsonify({"status": "success", "data": cached_data})
+
     config = load_client_config(alias)
     if not config:
         return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
@@ -559,6 +591,7 @@ def get_prevendas():
         cursor.close()
         conn.close()
 
+        definir_dados_cache(cache_key, results)
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
@@ -581,6 +614,14 @@ def get_sincronia():
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    
+    nocache = request.args.get('nocache', 'false').lower() == 'true'
+    cache_key = f"sincronia_{alias}"
+    if not nocache:
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        if cached_data is not None:
+            return jsonify({"status": "success", "data": cached_data})
+
     config = load_client_config(alias)
     if not config:
         return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
@@ -629,6 +670,7 @@ def get_sincronia():
         cursor.close()
         conn.close()
 
+        definir_dados_cache(cache_key, results)
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
@@ -649,6 +691,14 @@ def get_caixas_sem_gravacao():
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    
+    nocache = request.args.get('nocache', 'false').lower() == 'true'
+    cache_key = f"caixas_sem_gravacao_{alias}"
+    if not nocache:
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        if cached_data is not None:
+            return jsonify({"status": "success", "data": cached_data})
+
     config = load_client_config(alias)
     if not config:
         return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
@@ -687,6 +737,7 @@ def get_caixas_sem_gravacao():
         cursor.close()
         conn.close()
 
+        definir_dados_cache(cache_key, results)
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
@@ -1430,6 +1481,14 @@ def get_contas_pagar():
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    
+    nocache = request.args.get('nocache', 'false').lower() == 'true'
+    cache_key = f"contas_pagar_{alias}"
+    if not nocache:
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        if cached_data is not None:
+            return jsonify({"status": "success", "data": cached_data})
+
     config = load_client_config(alias)
     if not config:
         return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
@@ -1507,6 +1566,7 @@ def get_contas_pagar():
         cursor.close()
         conn.close()
 
+        definir_dados_cache(cache_key, results)
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
@@ -1526,6 +1586,14 @@ def get_estoque_combustivel():
     alias = request.args.get('cliente')
     if not alias:
         return jsonify({"status": "error", "message": "Cliente não especificado."}), 400
+    
+    nocache = request.args.get('nocache', 'false').lower() == 'true'
+    cache_key = f"estoque_{alias}"
+    if not nocache:
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        if cached_data is not None:
+            return jsonify({"status": "success", "data": cached_data})
+
     config = load_client_config(alias)
     if not config:
         return jsonify({"status": "error", "message": "Cliente não configurado."}), 400
@@ -1681,6 +1749,7 @@ def get_estoque_combustivel():
         cursor.close()
         conn.close()
 
+        definir_dados_cache(cache_key, results)
         return jsonify({"status": "success", "data": results})
         
     except psycopg2.Error as e:
