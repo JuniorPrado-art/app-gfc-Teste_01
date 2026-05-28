@@ -25,7 +25,7 @@ ALERT_STATE_FILE = 'alert_state.json'
 # ====================================================================================================
 MONITORAMENTO_CACHE = {}
 
-def obter_dados_cache(chave_cache, expiracao_segundos=120):
+def obter_dados_cache(chave_cache, expiracao_segundos=300):
     """
     Retorna os dados salvos em cache se a chave existir e o tempo não tiver expirado.
     """
@@ -546,7 +546,7 @@ def get_prevendas():
     nocache = request.args.get('nocache', 'false').lower() == 'true'
     cache_key = f"prevendas_{alias}"
     if not nocache:
-        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=300)
         if cached_data is not None:
             return jsonify({"status": "success", "data": cached_data})
 
@@ -618,7 +618,7 @@ def get_sincronia():
     nocache = request.args.get('nocache', 'false').lower() == 'true'
     cache_key = f"sincronia_{alias}"
     if not nocache:
-        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=300)
         if cached_data is not None:
             return jsonify({"status": "success", "data": cached_data})
 
@@ -695,7 +695,7 @@ def get_caixas_sem_gravacao():
     nocache = request.args.get('nocache', 'false').lower() == 'true'
     cache_key = f"caixas_sem_gravacao_{alias}"
     if not nocache:
-        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=300)
         if cached_data is not None:
             return jsonify({"status": "success", "data": cached_data})
 
@@ -1485,7 +1485,7 @@ def get_contas_pagar():
     nocache = request.args.get('nocache', 'false').lower() == 'true'
     cache_key = f"contas_pagar_{alias}"
     if not nocache:
-        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=300)
         if cached_data is not None:
             return jsonify({"status": "success", "data": cached_data})
 
@@ -1590,7 +1590,7 @@ def get_estoque_combustivel():
     nocache = request.args.get('nocache', 'false').lower() == 'true'
     cache_key = f"estoque_{alias}"
     if not nocache:
-        cached_data = obter_dados_cache(cache_key, expiracao_segundos=120)
+        cached_data = obter_dados_cache(cache_key, expiracao_segundos=300)
         if cached_data is not None:
             return jsonify({"status": "success", "data": cached_data})
 
