@@ -1,4 +1,5 @@
 {
     "chamados": true,
-    "custo_medio": true
+    "custo_medio": true,
+    "caixas_sem_gravacao": true
 }
