@@ -32,6 +32,16 @@ export default function DashboardLayout({
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [pushPermission, setPushPermission] = useState<string>('default');
 
+  interface ClienteConfig {
+    alias: string;
+    CLIENT_NAME: string;
+  }
+  const [clientesList, setClientesList] = useState<ClienteConfig[]>([]);
+  const [showSelectModal, setShowSelectModal] = useState<boolean>(false);
+  const [selectedClientAlias, setSelectedClientAlias] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeClientName, setActiveClientName] = useState<string>('');
+
   useEffect(() => {
     // Carrega a permissão (Admin ou Client) e envia pro login se logoff
     const storedRole = localStorage.getItem('gfc_role');
@@ -48,6 +58,31 @@ export default function DashboardLayout({
       .then(data => setVisibility(data))
       .catch(e => console.error("Erro carregando permissões: ", e));
 
+    // Se for admin, carrega a lista de clientes para seleção de banco de dados
+    if (storedRole === 'admin') {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/config/clientes`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.data && data.data.clientes) {
+            const list = data.data.clientes;
+            setClientesList(list);
+            
+            const currentActive = localStorage.getItem('gfc_cliente') || '';
+            const found = list.find((c: ClienteConfig) => c.alias === currentActive);
+            if (found) {
+              setActiveClientName(found.CLIENT_NAME);
+            }
+            setSelectedClientAlias(currentActive);
+
+            const confirmed = sessionStorage.getItem('gfc_admin_client_confirmed');
+            if (confirmed !== 'true') {
+              setShowSelectModal(true);
+            }
+          }
+        })
+        .catch(err => console.error("Erro ao buscar clientes:", err));
+    }
+
     // Inicialização de Notificações WebPush (Apenas em navegadores compatíveis):
     // 1. O código registra o 'Service Worker' (sw.js) que escuta as mensagens do servidor mesmo com a aba fechada.
     // 2. Se a permissão já estiver concedida, inscreve o usuário no push usando a chave VAPID.
@@ -61,6 +96,20 @@ export default function DashboardLayout({
     }
 
   }, []);
+
+  const handleConfirmClientSelection = () => {
+    if (!selectedClientAlias) return;
+    localStorage.setItem('gfc_cliente', selectedClientAlias);
+    sessionStorage.setItem('gfc_admin_client_confirmed', 'true');
+    
+    const found = clientesList.find(c => c.alias === selectedClientAlias);
+    if (found) {
+      setActiveClientName(found.CLIENT_NAME);
+    }
+    
+    setShowSelectModal(false);
+    window.location.reload();
+  };
 
 
   // Função que inscreve o navegador do usuário no servidor para receber Push Notifications nativas.
@@ -185,6 +234,42 @@ export default function DashboardLayout({
           </div>
         </div>
 
+        {role === 'admin' && activeClientName && (
+          <div className="active-db-badge">
+            <div className="active-db-title">Banco Ativo (Teste)</div>
+            <div className="active-db-name" title={activeClientName}>{activeClientName}</div>
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('gfc_admin_client_confirmed');
+                setShowSelectModal(true);
+              }}
+              style={{
+                alignSelf: 'flex-start',
+                marginTop: '4px',
+                background: 'rgba(59, 130, 246, 0.15)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '4px',
+                color: '#38bdf8',
+                fontSize: '10px',
+                padding: '3px 8px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                e.currentTarget.style.borderColor = '#38bdf8';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+              }}
+            >
+              Alternar Banco
+            </button>
+          </div>
+        )}
+
         <nav style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
 
           {renderMenuGroup(
@@ -305,7 +390,11 @@ export default function DashboardLayout({
 
         <div style={{ padding: '16px 0', borderTop: '1px solid var(--glass-border)' }}>
           <button
-            onClick={() => { localStorage.removeItem('gfc_role'); window.location.href = '/login'; }}
+            onClick={() => {
+              localStorage.removeItem('gfc_role');
+              sessionStorage.removeItem('gfc_admin_client_confirmed');
+              window.location.href = '/login';
+            }}
             className="menu-item"
             style={{ color: '#ef4444', width: '100%', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'inherit' }}
           >
@@ -356,6 +445,115 @@ export default function DashboardLayout({
         {children}
       </main>
 
+      {/* Modal de Seleção de Banco de Dados */}
+      {showSelectModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content-premium fade-in">
+            <h2 className="title-primary" style={{ fontSize: '22px', marginBottom: '8px' }}>
+              Selecionar Banco de Cliente
+            </h2>
+            <p className="text-muted" style={{ fontSize: '13px', marginBottom: '16px' }}>
+              Como usuário comercial (administrador), selecione qual banco de dados de cliente deseja conectar para visualizar as métricas e realizar testes.
+            </p>
+
+            <div className="input-group" style={{ marginBottom: '12px' }}>
+              <input
+                type="text"
+                className="gfc-input"
+                placeholder="Buscar banco por nome ou alias..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ fontSize: '13px', padding: '10px 14px' }}
+              />
+            </div>
+
+            <div className="client-list-scroll">
+              {clientesList
+                .filter(cli => 
+                  cli.CLIENT_NAME.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  cli.alias.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((cli) => {
+                  const isSelected = selectedClientAlias === cli.alias;
+                  const isPreviouslySaved = localStorage.getItem('gfc_cliente') === cli.alias;
+                  return (
+                    <div
+                      key={cli.alias}
+                      className={`client-card-premium ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setSelectedClientAlias(cli.alias)}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
+                          {cli.CLIENT_NAME}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                          Alias: {cli.alias}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {isPreviouslySaved && (
+                          <span style={{ fontSize: '10px', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.4)', color: '#38bdf8', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                            Banco Escolhido
+                          </span>
+                        )}
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: `2px solid ${isSelected ? '#10b981' : '#334155'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: isSelected ? '#10b981' : 'transparent',
+                          transition: 'all 0.2s'
+                        }}>
+                          {isSelected && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}>
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              {clientesList.filter(cli => 
+                cli.CLIENT_NAME.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                cli.alias.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 && (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#64748b', fontSize: '13px' }}>
+                  Nenhum banco de cliente encontrado.
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '16px' }}>
+              {localStorage.getItem('gfc_cliente') && (
+                <button
+                  type="button"
+                  className="gfc-button secondary"
+                  onClick={() => {
+                    setSelectedClientAlias(localStorage.getItem('gfc_cliente') || '');
+                    setShowSelectModal(false);
+                  }}
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                type="button"
+                className="gfc-button"
+                onClick={handleConfirmClientSelection}
+                style={{ padding: '8px 16px', fontSize: '13px', background: '#10b981', color: 'white' }}
+                disabled={!selectedClientAlias}
+              >
+                Confirmar e Conectar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

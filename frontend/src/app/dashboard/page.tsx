@@ -148,13 +148,13 @@ export default function DashboardIndex() {
           <a href="/dashboard/sincronia" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s' }}>
             <div className="stat-label">Sincronia</div>
             {sincroniaCount === null ? (
-               <div className="stat-value" style={{ color: '#94a3b8', fontSize: '20px' }}>Carregando...</div>
+              <div className="stat-value" style={{ color: '#94a3b8', fontSize: '20px' }}>Carregando...</div>
             ) : sincroniaCount === 'timeout' ? (
-               <div className="stat-value" style={{ color: '#fbbf24', fontSize: '13px', lineHeight: '1.4', marginTop: '4px' }}>Conexão lenta. Aguarde um momento...</div>
+              <div className="stat-value" style={{ color: '#fbbf24', fontSize: '13px', lineHeight: '1.4', marginTop: '4px' }}>Conexão lenta. Aguarde um momento...</div>
             ) : sincroniaCount > 0 ? (
-               <div className="stat-value" style={{ color: '#ef4444', fontSize: '20px' }}>{sincroniaCount} Posto{sincroniaCount > 1 ? 's' : ''} Atrasado{sincroniaCount > 1 ? 's' : ''}</div>
+              <div className="stat-value" style={{ color: '#ef4444', fontSize: '20px' }}>{sincroniaCount} Posto{sincroniaCount > 1 ? 's' : ''} Atrasado{sincroniaCount > 1 ? 's' : ''}</div>
             ) : (
-               <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>Normalizada</div>
+              <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>Normalizada</div>
             )}
           </a>
         )}
@@ -162,13 +162,13 @@ export default function DashboardIndex() {
           <a href="/dashboard/pre-vendas" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s' }}>
             <div className="stat-label">Pré-vendas</div>
             {prevendasCount === null ? (
-               <div className="stat-value" style={{ color: '#94a3b8', fontSize: '20px' }}>Carregando...</div>
+              <div className="stat-value" style={{ color: '#94a3b8', fontSize: '20px' }}>Carregando...</div>
             ) : prevendasCount === 'timeout' ? (
-               <div className="stat-value" style={{ color: '#fbbf24', fontSize: '13px', lineHeight: '1.4', marginTop: '4px' }}>Conexão lenta. Aguarde um momento...</div>
+              <div className="stat-value" style={{ color: '#fbbf24', fontSize: '13px', lineHeight: '1.4', marginTop: '4px' }}>Conexão lenta. Aguarde um momento...</div>
             ) : prevendasCount > 0 ? (
-               <div className="stat-value" style={{ color: '#ef4444', fontSize: '20px' }}>{prevendasCount} Pendente{prevendasCount > 1 ? 's' : ''}</div>
+              <div className="stat-value" style={{ color: '#ef4444', fontSize: '20px' }}>{prevendasCount} Pendente{prevendasCount > 1 ? 's' : ''}</div>
             ) : (
-               <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>Normalizada</div>
+              <div className="stat-value" style={{ color: '#10b981', fontSize: '20px' }}>Normalizada</div>
             )}
           </a>
         )}
@@ -180,7 +180,7 @@ export default function DashboardIndex() {
           <div className="card-header" style={{ justifyContent: 'center' }}>
             <h2 className="title-primary" style={{ textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>Avisos Importantes</h2>
           </div>
-          
+
           <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             {isVisible('caixas_sem_gravacao') && (
               <a href="/dashboard/caixas-sem-gravacao" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
@@ -190,7 +190,7 @@ export default function DashboardIndex() {
                 </div>
               </a>
             )}
-            
+
             {isVisible('estoque_critico') && (
               <a href="/dashboard/estoque?filtro=critico" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                 <div className="stat-label" style={{ marginBottom: '8px' }}>Estoque crítico de combustível</div>
