@@ -41,6 +41,7 @@ export default function DashboardLayout({
   const [selectedClientAlias, setSelectedClientAlias] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeClientName, setActiveClientName] = useState<string>('');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
   useEffect(() => {
     // Carrega a permissão (Admin ou Client) e envia pro login se logoff
@@ -167,7 +168,7 @@ export default function DashboardLayout({
 
     return (
       <div style={{ position: 'relative', marginBottom: '4px' }}>
-        <Link href={path} className={`menu-item ${isActive(path)}`}>
+        <Link href={path} className={`menu-item ${isActive(path)}`} onClick={() => setIsMobileSidebarOpen(false)}>
           {icon}
           {label}
         </Link>
@@ -220,12 +221,39 @@ export default function DashboardLayout({
   const isSubPage = pathname !== '/dashboard' && pathname !== '/dashboard/';
 
   return (
-    <div className="dashboard-layout fade-in">
+    <div className={`dashboard-layout ${isMobileSidebarOpen ? 'sidebar-open' : ''} fade-in`}>
+
+      {/* Top Mobile Header */}
+      <div className="mobile-header">
+        <button className="menu-toggle-btn" onClick={() => setIsMobileSidebarOpen(true)} title="Abrir Menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div className="mobile-header-title">GFC</div>
+        <div style={{ width: '40px' }}></div>
+      </div>
+
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setIsMobileSidebarOpen(false)}></div>
+      )}
 
       {/* Sidebar Inteligente Premium */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+
+        {/* Close button only visible on mobile inside sidebar */}
+        <button className="sidebar-close-btn" onClick={() => setIsMobileSidebarOpen(false)} title="Fechar Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
         <div className="sidebar-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '32px', textAlign: 'center', width: '100%', padding: '0' }}>
-          <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textDecoration: 'none' }} onClick={() => setIsMobileSidebarOpen(false)}>
             <img src="/logo.png" alt="GFC Logo" style={{ width: '110px', height: '110px', borderRadius: '20px' }} />
             <div style={{ fontSize: '22px', fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>GFC</div>
           </Link>
@@ -324,15 +352,15 @@ export default function DashboardLayout({
             ['/dashboard/configuracoes/email', '/dashboard/configuracoes/clientes', '/dashboard/configuracoes/usuarios'],
             [],
             <>
-              <Link href="/dashboard/configuracoes/email" className={`menu-item ${isActive('/configuracoes/email')}`}>
+              <Link href="/dashboard/configuracoes/email" className={`menu-item ${isActive('/configuracoes/email')}`} onClick={() => setIsMobileSidebarOpen(false)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                 Conf. Email Aplicativo
               </Link>
-              <Link href="/dashboard/configuracoes/clientes" className={`menu-item ${isActive('/configuracoes/clientes')}`}>
+              <Link href="/dashboard/configuracoes/clientes" className={`menu-item ${isActive('/configuracoes/clientes')}`} onClick={() => setIsMobileSidebarOpen(false)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 Cadastro de Banco de Cliente
               </Link>
-              <Link href="/dashboard/configuracoes/usuarios" className={`menu-item ${isActive('/configuracoes/usuarios')}`}>
+              <Link href="/dashboard/configuracoes/usuarios" className={`menu-item ${isActive('/configuracoes/usuarios')}`} onClick={() => setIsMobileSidebarOpen(false)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 Cadastro de Usuário de Cliente
               </Link>
@@ -358,7 +386,10 @@ export default function DashboardLayout({
 
         <div style={{ textAlign: 'center', marginTop: '4px', marginBottom: '8px' }}>
           <button
-            onClick={() => window.location.href = '/dashboard/alterar-senha'}
+            onClick={() => {
+              setIsMobileSidebarOpen(false);
+              window.location.href = '/dashboard/alterar-senha';
+            }}
             style={{ background: 'transparent', border: '1px solid #334155', borderRadius: '4px', padding: '4px 8px', color: '#94a3b8', fontSize: '11px', cursor: 'pointer', transition: 'background 0.2s' }}
             onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
             onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
