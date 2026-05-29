@@ -224,12 +224,12 @@ export default function DashboardLayout({
 
       {/* Sidebar Inteligente Premium */}
       <aside className="sidebar">
-        <div className="sidebar-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px', marginBottom: '32px' }}>
-          <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px', textDecoration: 'none' }}>
-            <img src="/logo.png" alt="Comercial Informática" style={{ width: '120px', height: 'auto', borderRadius: '4px' }} />
-            <div style={{ fontSize: '22px', fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>Painel GFC</div>
+        <div className="sidebar-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '32px', textAlign: 'center', width: '100%', padding: '0' }}>
+          <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <img src="/logo.png" alt="GFC Logo" style={{ width: '80px', height: '80px', borderRadius: '16px' }} />
+            <div style={{ fontSize: '22px', fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>GFC</div>
           </Link>
-          <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.4', paddingLeft: '2px' }}>
+          <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.4' }}>
             Gerenciador de<br />Ferramentas Customizadas
           </div>
         </div>

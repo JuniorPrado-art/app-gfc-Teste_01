@@ -89,7 +89,7 @@ export default function Login() {
   };
 
   return (
-    <div className="container fade-in">
+    <div className="login-container fade-in">
       <div className="glass-panel" style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
 
         <div style={{ marginBottom: 32 }}>
