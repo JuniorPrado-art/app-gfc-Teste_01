@@ -226,7 +226,7 @@ export default function DashboardLayout({
       <aside className="sidebar">
         <div className="sidebar-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '32px', textAlign: 'center', width: '100%', padding: '0' }}>
           <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <img src="/logo.png" alt="GFC Logo" style={{ width: '80px', height: '80px', borderRadius: '16px' }} />
+            <img src="/logo.png" alt="GFC Logo" style={{ width: '110px', height: '110px', borderRadius: '20px' }} />
             <div style={{ fontSize: '22px', fontWeight: 700, color: 'white', letterSpacing: '-0.5px' }}>GFC</div>
           </Link>
           <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.4' }}>
