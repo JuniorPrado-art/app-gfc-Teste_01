@@ -488,6 +488,28 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Utilitários de Grid responsivos */
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+/* Cabeçalho de página padrão */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 16px;
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
 /* ====================================================================================================
    RESPONSIVIDADE MÓVEL (MOBILE RESPONSIVENESS)
    ==================================================================================================== */
@@ -612,6 +634,28 @@ body {
 
   .stat-grid {
     grid-template-columns: 1fr;
+  }
+
+  .grid-cols-2, .grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .page-header-actions > button,
+  .page-header-actions > a {
+    flex: 1;
+    min-width: 130px;
+    justify-content: center;
   }
 
   .modal-content-premium {

@@ -128,7 +128,7 @@ export default function SincroniaPage() {
   return (
     <div className="fade-in" style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       
-      <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <h1 style={{ color: '#fbbf24', fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
             Monitoramento de Sincronia
@@ -137,7 +137,7 @@ export default function SincroniaPage() {
             Temos <strong>{delayedCount}</strong> {delayedCount === 1 ? 'posto atrasado' : 'postos atrasados'} na rede.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="page-header-actions">
           <button 
             onClick={() => setToast({ message: 'Estamos preparando algo incrível aqui. Volte em breve!', type: 'success' })}
             className="gfc-button" 

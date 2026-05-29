@@ -143,7 +143,7 @@ export default function DashboardIndex() {
       </header>
 
       {/* Cards de Resumo Principais */}
-      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+      <div className="stat-grid grid-cols-2">
         {isVisible('sincronia') && (
           <a href="/dashboard/sincronia" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s' }}>
             <div className="stat-label">Sincronia</div>
@@ -181,7 +181,7 @@ export default function DashboardIndex() {
             <h2 className="title-primary" style={{ textTransform: 'uppercase', margin: 0, textAlign: 'center' }}>Avisos Importantes</h2>
           </div>
 
-          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="stat-grid grid-cols-4">
             {isVisible('caixas_sem_gravacao') && (
               <a href="/dashboard/caixas-sem-gravacao" className="stat-box" style={{ textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                 <div className="stat-label" style={{ marginBottom: '8px' }}>Caixas sem gravação</div>

@@ -100,8 +100,8 @@ export default function Login() {
               </svg>
             </div>
           </div>
-          <h1 className="title-primary" style={{ fontSize: '24px' }}>Entrar</h1>
-          <p className="text-muted">Painel GFC - Acesso Restrito</p>
+          <h1 className="title-primary" style={{ fontSize: '32px', letterSpacing: '1px' }}>GFC</h1>
+          <p className="text-muted">Acesso Restrito</p>
         </div>
 
         {toast && (

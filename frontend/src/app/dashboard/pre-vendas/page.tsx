@@ -140,7 +140,7 @@ export default function PreVendasPage() {
     <div className="fade-in" style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       
       {/* Cabeçalho como no Print */}
-      <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <h1 style={{ color: '#f87171', fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
             Sistema de Alerta de Pré-Vendas
@@ -149,7 +149,7 @@ export default function PreVendasPage() {
             O robô detectou <strong>{records.length}</strong> {records.length === 1 ? 'registro pendente' : 'registros pendentes'} que precisam de atenção.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div className="page-header-actions">
           <button 
             onClick={() => setToast({ message: 'Estamos preparando algo incrível aqui. Volte em breve!', type: 'success' })}
             className="gfc-button" 
