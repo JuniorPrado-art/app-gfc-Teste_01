@@ -7,12 +7,12 @@
             "DB_PASS": "posto@posto#1234",
             "DB_PORT": "6238",
             "DB_USER": "postgres",
-            "TELEGRAM_BOT_TOKEN": "8494604037:AAG1IU5sY3jlp3_1lnYu-bbcahbYKOd6gwY",
-            "TELEGRAM_CHAT_ID": "-1003622010943",
-            "VAPID_PRIVATE_KEY": "BAHzx-y2L4d9nrcV1EZxBHoHjEIgakqkInoVKyok9TxcvtlZZ0zZTPOlGw1VdVy3SXwoebSEo8q8MfBOEqgiWws",
-            "VAPID_PUBLIC_KEY": "-----BEGIN PRIVATE KEY----- MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg29huVwWxAvNyUdjp oV2ncNMgxAix993mgMnRg6FjeFOhRANCAAQB88fsti+HfZ63FdRGcQR6B4xCIGpK pCJ6FSsqJPU8XL7ZWWdM2UzzpRsNVXVct0l8KHm0hKPKvDHwThKoIlsL -----END PRIVATE KEY-----",
+            "TELEGRAM_BOT_TOKEN": "",
+            "TELEGRAM_CHAT_ID": "",
+            "VAPID_PRIVATE_KEY": "",
+            "VAPID_PUBLIC_KEY": "",
             "alias": "MATRIZ_FALEIROS",
-            "emails": "milton.ferreira@franqueadolinx.com.br"
+            "emails": "milton.ferreira@franqueadolinx.com.br;gerson.rodrigues@innfomaster.com.br"
         },
         {
             "CLIENT_NAME": "Matriz Rede IPE",
