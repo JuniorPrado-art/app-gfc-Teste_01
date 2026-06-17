@@ -652,7 +652,8 @@ def get_sincronia():
                      ELSE false 
                 END as is_delayed
             FROM pgd_flow_sync s
-            LEFT JOIN empresa e ON s.sid::varchar = e.codigo::varchar
+            LEFT JOIN pgd_hosts h ON s.sid = h.sid
+            LEFT JOIN empresa e ON h.pessoa = e.grid
             ORDER BY is_delayed DESC, s.ts ASC
         """)
         
@@ -960,7 +961,8 @@ def executar_disparo_alerta(tipo, cliente_alias, force_send=False):
                          ELSE false 
                     END as is_delayed
                 FROM pgd_flow_sync s
-                LEFT JOIN empresa e ON s.sid::varchar = e.codigo::varchar
+                LEFT JOIN pgd_hosts h ON s.sid = h.sid
+                LEFT JOIN empresa e ON h.pessoa = e.grid
                 ORDER BY is_delayed DESC, s.ts ASC
             """)
             columns = [desc[0] for desc in cursor.description]
